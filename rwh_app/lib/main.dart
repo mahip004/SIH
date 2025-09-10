@@ -1,9 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart'; // 🔹 import this
 import 'providers/user_provider.dart';
 import 'screens/home_screen.dart';
+import 'screens/login_screen.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform, // 🔹 use this
+  );
+
   runApp(const MyApp());
 }
 
@@ -22,9 +31,14 @@ class MyApp extends StatelessWidget {
         theme: ThemeData(
           primarySwatch: Colors.teal,
           brightness: Brightness.light,
-          visualDensity: VisualDensity.adaptivePlatformDensity,
         ),
-        home: const HomeScreen(),
+        home: Consumer<UserProvider>(
+          builder: (context, userProvider, _) {
+            return userProvider.user == null
+                ? const LoginScreen()
+                : const HomeScreen();
+          },
+        ),
       ),
     );
   }

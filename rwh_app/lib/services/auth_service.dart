@@ -5,19 +5,27 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
+  /// Sign in with Google
   Future<User?> signInWithGoogle() async {
     if (kIsWeb) {
-      // ✅ Web Sign-in
+      // 🔹 Web sign-in
       GoogleAuthProvider googleProvider = GoogleAuthProvider();
+      googleProvider
+        ..addScope('email')
+        ..addScope('profile');
 
-      UserCredential userCredential =
+      final UserCredential userCredential =
       await _auth.signInWithPopup(googleProvider);
 
       return userCredential.user;
     } else {
-      // ✅ Android Sign-in
-      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
-      if (googleUser == null) return null;
+      // 🔹 Android / iOS sign-in
+      final GoogleSignIn googleSignIn = GoogleSignIn(
+        scopes: ['email', 'profile'],
+      );
+
+      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+      if (googleUser == null) return null; // User cancelled
 
       final GoogleSignInAuthentication googleAuth =
       await googleUser.authentication;
@@ -27,17 +35,21 @@ class AuthService {
         idToken: googleAuth.idToken,
       );
 
-      UserCredential userCredential =
+      final UserCredential userCredential =
       await _auth.signInWithCredential(credential);
 
       return userCredential.user;
     }
   }
 
+  /// Sign out
   Future<void> signOut() async {
     await _auth.signOut();
     if (!kIsWeb) {
-      await GoogleSignIn().signOut();
+      final GoogleSignIn googleSignIn = GoogleSignIn(
+        scopes: ['email', 'profile'],
+      );
+      await googleSignIn.signOut();
     }
   }
 }
