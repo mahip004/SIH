@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart'; // 🔹 import this
+import 'firebase_options.dart'; // 🔹 Firebase options
 import 'providers/user_provider.dart';
-import 'screens/home_screen.dart';
 import 'screens/login_screen.dart';
+import 'screens/home_screen.dart'; // ✅ import the new Home Page
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -29,14 +29,45 @@ class MyApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         title: 'Rainwater Harvesting App',
         theme: ThemeData(
-          primarySwatch: Colors.teal,
-          brightness: Brightness.light,
+          primaryColor: const Color(0xFF0A66C2), // LinkedIn blue
+          scaffoldBackgroundColor: Colors.white,
+          appBarTheme: const AppBarTheme(
+            backgroundColor: Color(0xFF0A66C2),
+            foregroundColor: Colors.white,
+            elevation: 0,
+          ),
+          inputDecorationTheme: InputDecorationTheme(
+            filled: true,
+            fillColor: Colors.grey[100],
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFF0A66C2), width: 2),
+            ),
+            labelStyle: const TextStyle(color: Colors.black87),
+          ),
+          elevatedButtonTheme: ElevatedButtonThemeData(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF0A66C2),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              padding:
+              const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
+              textStyle: const TextStyle(
+                  fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+          ),
         ),
         home: Consumer<UserProvider>(
           builder: (context, userProvider, _) {
             return userProvider.user == null
                 ? const LoginScreen()
-                : const HomeScreen();
+                : const HomeScreen(); // ✅ Redirect to HomePage
           },
         ),
       ),

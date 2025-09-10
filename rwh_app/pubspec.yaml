@@ -30,6 +30,7 @@ dependencies:
   firebase_core: ^3.15.2
   firebase_auth: ^5.5.0
   google_sign_in: ^6.2.1
+  font_awesome_flutter: ^10.7.0   # ✅ add this line
 
 dev_dependencies:
   flutter_test:
@@ -43,3 +44,5 @@ flutter:
   # Add your image assets here
   assets:
     - assets/google_logo.png
+    - assets/recharge_sketch.png
+    - assets/harvesting.jpg

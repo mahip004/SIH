@@ -7,10 +7,9 @@ class UserProvider with ChangeNotifier {
   User? get user => _user;
 
   // ✅ Form data
-  String name = '';
-  String location = '';
-  double roofArea = 0;
   int numberOfDwellers = 0;
+  double roofArea = 0;
+  String roofMaterial = '';
   double openSpace = 0;
 
   // --- Firebase user management ---
@@ -26,25 +25,22 @@ class UserProvider with ChangeNotifier {
 
   // --- Form data management ---
   void setUserData({
-    required String name,
-    required String location,
-    required double roofArea,
     required int numberOfDwellers,
+    required double roofArea,
+    required String roofMaterial,
     required double openSpace,
   }) {
-    this.name = name;
-    this.location = location;
-    this.roofArea = roofArea;
     this.numberOfDwellers = numberOfDwellers;
+    this.roofArea = roofArea;
+    this.roofMaterial = roofMaterial;
     this.openSpace = openSpace;
     notifyListeners();
   }
 
   void clearUserData() {
-    name = '';
-    location = '';
-    roofArea = 0;
     numberOfDwellers = 0;
+    roofArea = 0;
+    roofMaterial = '';
     openSpace = 0;
     notifyListeners();
   }
