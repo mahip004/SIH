@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "732492746255",
+    "project_id": "rwh-app-9e78f",
+    "storage_bucket": "rwh-app-9e78f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:732492746255:android:64927423ca0be92aa35d7a",
+        "android_client_info": {
+          "package_name": "com.example.rwh_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD0d_xUzBc8mfi_GNW92Haa7XUGFw6IvH4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
