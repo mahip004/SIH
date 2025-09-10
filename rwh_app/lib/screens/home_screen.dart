@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart'; // 🔹 for kIsWeb
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -11,7 +10,7 @@ import 'login_screen.dart';
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
-  // --- Logout function with confirmation ---
+  // --- Show logout confirmation ---
   void _confirmLogout(BuildContext context) {
     showDialog(
       context: context,
@@ -25,7 +24,7 @@ class HomeScreen extends StatelessWidget {
           ),
           TextButton(
             onPressed: () async {
-              Navigator.of(context).pop(); // Close the dialog
+              Navigator.of(context).pop(); // Close dialog
               await _logout(context);
             },
             child: const Text('Logout'),
@@ -35,17 +34,11 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
+  // --- Perform logout ---
   Future<void> _logout(BuildContext context) async {
     try {
-      // Firebase logout
       await FirebaseAuth.instance.signOut();
-
-      // Only sign out from GoogleSignIn on non-web platforms
-      if (!kIsWeb) {
-        await GoogleSignIn().signOut();
-      }
-
-      // Navigate to login screen and remove all previous routes
+      await GoogleSignIn().signOut();
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => const LoginScreen()),
             (route) => false,
@@ -62,10 +55,7 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          "Rainwater Hub",
-          style: TextStyle(color: Colors.white),
-        ),
+        title: const Text("Rainwater Hub"),
         backgroundColor: const Color(0xFF0A66C2),
         elevation: 0,
         actions: [
@@ -139,7 +129,7 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  // --- Helper Widget for Home Cards ---
+  // --- Helper for Home Cards ---
   Widget _buildHomeCard(
       BuildContext context, {
         required IconData icon,

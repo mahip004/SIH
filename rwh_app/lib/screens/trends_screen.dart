@@ -1,25 +1,96 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:http/http.dart' as http;
+import '../helpers/location_helper.dart'; // ✅ import your location helper
 
-class TrendsScreen extends StatelessWidget {
+class TrendsScreen extends StatefulWidget {
   const TrendsScreen({super.key});
 
   @override
+  State<TrendsScreen> createState() => _TrendsScreenState();
+}
+
+class _TrendsScreenState extends State<TrendsScreen> {
+  List<double> rainfall = [];
+  List<String> days = [];
+  bool isLoading = true;
+
+  final int checkedFeasibilityCount = 120;
+  final int adoptedHarvestingCount = 35;
+
+  // --- Replace with your Visual Crossing API key ---
+  final String apiKey = 'RWV2WZCCLJYBSLMAH7KFGZN5C';
+
+  double? latitude;
+  double? longitude;
+
+  @override
+  void initState() {
+    super.initState();
+    _initLocationAndFetch();
+  }
+
+  Future<void> _initLocationAndFetch() async {
+    final loc = await LocationHelper.getSavedLocation(); // get saved location
+    setState(() {
+      latitude = loc?.latitude ?? 28.6139; // fallback
+      longitude = loc?.longitude ?? 77.2090;
+    });
+    await fetchRainfallData();
+  }
+
+  Future<void> fetchRainfallData() async {
+    if (latitude == null || longitude == null) return;
+
+    try {
+      final uri = Uri.parse(
+          'https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/$latitude,$longitude/last7days?unitGroup=metric&include=days&key=$apiKey&contentType=json');
+
+      final response = await http.get(uri);
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+
+        final List<dynamic> daysData = data['days'];
+        List<double> rainfallTemp = [];
+        List<String> daysTemp = [];
+
+        for (var day in daysData) {
+          rainfallTemp.add((day['precip'] as num).toDouble());
+          daysTemp.add(DateTime.parse(day['datetime']).weekdayName());
+        }
+
+        setState(() {
+          rainfall = rainfallTemp;
+          days = daysTemp;
+          isLoading = false;
+        });
+      } else {
+        debugPrint('Failed to fetch rainfall data: ${response.statusCode}');
+        setState(() {
+          isLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error fetching rainfall data: $e');
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // --- Dummy data ---
-    final List<double> rainfall = [12, 25, 8, 18, 22, 15, 10]; // mm/day
-    final List<String> days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-
-    final int checkedFeasibilityCount = 120;
-    final int adoptedHarvestingCount = 35;
-
     return Scaffold(
       appBar: AppBar(
         title: const Text("Water Insights"),
         backgroundColor: const Color(0xFF0A66C2),
       ),
-      body: Padding(
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
@@ -170,5 +241,12 @@ class TrendsScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+extension WeekdayName on DateTime {
+  String weekdayName() {
+    const names = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+    return names[this.weekday - 1];
   }
 }
