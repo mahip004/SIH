@@ -13,9 +13,19 @@ class FeasibilityForm extends StatefulWidget {
 class _FeasibilityFormState extends State<FeasibilityForm> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _dwellersController = TextEditingController();
-  final TextEditingController _roofController = TextEditingController();
-  final TextEditingController _roofMaterialController = TextEditingController();
+  final TextEditingController _roofAreaController = TextEditingController();
   final TextEditingController _spaceController = TextEditingController();
+
+  String _selectedRoofType = "Flat";
+  String _selectedRoofMaterial = "GI Sheet";
+
+  // Map of roof materials and coefficients
+  final Map<String, double> _roofMaterials = {
+    "GI Sheet": 0.9,
+    "Asbestos": 0.8,
+    "Tiled": 0.75,
+    "Concrete": 0.7,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -46,24 +56,47 @@ class _FeasibilityFormState extends State<FeasibilityForm> {
                 controller: _dwellersController,
                 decoration: const InputDecoration(labelText: "Number of Dwellers"),
                 keyboardType: TextInputType.number,
-                validator: (value) => value!.isEmpty ? "Enter number of dwellers" : null,
+                validator: (value) =>
+                    value!.isEmpty ? "Enter number of dwellers" : null,
               ),
               const SizedBox(height: 16),
 
               // Roof Area
               TextFormField(
-                controller: _roofController,
+                controller: _roofAreaController,
                 decoration: const InputDecoration(labelText: "Roof Area (m²)"),
                 keyboardType: TextInputType.number,
                 validator: (value) => value!.isEmpty ? "Enter roof area" : null,
               ),
               const SizedBox(height: 16),
 
-              // Roof Material
-              TextFormField(
-                controller: _roofMaterialController,
+              // Roof Type Dropdown
+              DropdownButtonFormField<String>(
+                value: _selectedRoofType,
+                decoration: const InputDecoration(labelText: "Roof Type"),
+                items: ["Flat", "Sloping"].map((type) {
+                  return DropdownMenuItem(value: type, child: Text(type));
+                }).toList(),
+                onChanged: (value) {
+                  setState(() => _selectedRoofType = value!);
+                },
+              ),
+              const SizedBox(height: 16),
+
+              // Roof Material Dropdown
+              DropdownButtonFormField<String>(
+                value: _selectedRoofMaterial,
                 decoration: const InputDecoration(labelText: "Roof Material"),
-                validator: (value) => value!.isEmpty ? "Enter roof material" : null,
+                items: _roofMaterials.keys.map((mat) {
+                  final coeff = _roofMaterials[mat]!;
+                  return DropdownMenuItem(
+                    value: mat,
+                    child: Text("$mat ($coeff)"),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  setState(() => _selectedRoofMaterial = value!);
+                },
               ),
               const SizedBox(height: 16),
 
@@ -84,8 +117,11 @@ class _FeasibilityFormState extends State<FeasibilityForm> {
                     if (_formKey.currentState!.validate()) {
                       Provider.of<UserProvider>(context, listen: false).setUserData(
                         numberOfDwellers: int.parse(_dwellersController.text),
-                        roofArea: double.parse(_roofController.text),
-                        roofMaterial: _roofMaterialController.text,
+                        roofArea: double.parse(_roofAreaController.text),
+                        roofType: _selectedRoofType.toLowerCase(),
+                        roofMaterial: _selectedRoofMaterial, // just name
+                        runoffCoefficient:
+                            _roofMaterials[_selectedRoofMaterial]!, // coefficient
                         openSpace: double.parse(_spaceController.text),
                       );
 

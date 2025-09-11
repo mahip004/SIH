@@ -17,6 +17,7 @@ dependencies:
   # For getting user location (GPS)
   geolocator: ^10.1.1
   shared_preferences: ^2.1.1
+  geocoding: ^2.0.5   # add this line
 
   # For fetching local weather/rainfall data via API
   http: ^1.2.2

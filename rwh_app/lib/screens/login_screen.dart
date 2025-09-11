@@ -14,16 +14,17 @@ class LoginScreen extends StatelessWidget {
     try {
       UserCredential userCredential;
 
+      // --- GOOGLE SIGN-IN ---
       if (kIsWeb) {
         GoogleAuthProvider googleProvider = GoogleAuthProvider();
         userCredential =
-        await FirebaseAuth.instance.signInWithPopup(googleProvider);
+            await FirebaseAuth.instance.signInWithPopup(googleProvider);
       } else {
         final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
         if (googleUser == null) return;
 
         final GoogleSignInAuthentication googleAuth =
-        await googleUser.authentication;
+            await googleUser.authentication;
 
         final credential = GoogleAuthProvider.credential(
           accessToken: googleAuth.accessToken,
@@ -31,14 +32,18 @@ class LoginScreen extends StatelessWidget {
         );
 
         userCredential =
-        await FirebaseAuth.instance.signInWithCredential(credential);
+            await FirebaseAuth.instance.signInWithCredential(credential);
       }
 
+      // --- SAVE USER ---
       Provider.of<UserProvider>(context, listen: false)
           .setUser(userCredential.user);
 
       // --- LOCATION PROMPT ---
       final savedLocation = await LocationHelper.getSavedLocation();
+      double? latitude;
+      double? longitude;
+
       if (savedLocation == null) {
         bool? shareLocation = await showDialog(
           context: context,
@@ -58,11 +63,24 @@ class LoginScreen extends StatelessWidget {
         );
 
         if (shareLocation == true) {
-          await LocationHelper.askLocationPermissionAndFetch();
+          final loc = await LocationHelper.askLocationPermissionAndFetch();
+          if (loc != null) {
+            latitude = loc.latitude;
+            longitude = loc.longitude;
+          }
         }
+      } else {
+        latitude = savedLocation.latitude;
+        longitude = savedLocation.longitude;
       }
 
-      // Navigate to HomeScreen
+      // Save location to UserProvider
+      if (latitude != null && longitude != null) {
+        Provider.of<UserProvider>(context, listen: false)
+            .setLocation(latitude, longitude);
+      }
+
+      // --- NAVIGATE TO HOME ---
       Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (_) => const HomeScreen()));
     } catch (e) {
@@ -92,7 +110,7 @@ class LoginScreen extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blueAccent,
                   padding:
-                  const EdgeInsets.symmetric(horizontal: 20, vertical: 12)),
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 12)),
               icon: Image.asset(
                 'assets/google_logo.png',
                 height: 24,
