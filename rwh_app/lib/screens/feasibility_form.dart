@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../helpers/soil_helper.dart';
 import '../providers/user_provider.dart';
 import 'result_screen.dart';
 
@@ -18,8 +19,10 @@ class _FeasibilityFormState extends State<FeasibilityForm> {
 
   String _selectedRoofType = "Flat";
   String _selectedRoofMaterial = "GI Sheet";
+  String? _selectedState;
 
-  // Map of roof materials and coefficients
+  bool _isLoading = true;
+
   final Map<String, double> _roofMaterials = {
     "GI Sheet": 0.9,
     "Asbestos": 0.8,
@@ -28,7 +31,26 @@ class _FeasibilityFormState extends State<FeasibilityForm> {
   };
 
   @override
+  void initState() {
+    super.initState();
+    _loadSoil();
+  }
+
+  Future<void> _loadSoil() async {
+    await SoilHelper.loadSoilData();
+    setState(() {
+      _isLoading = false;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text("Feasibility Form"),
@@ -51,13 +73,26 @@ class _FeasibilityFormState extends State<FeasibilityForm> {
               ),
               const SizedBox(height: 20),
 
+              // --- State Dropdown ---
+              DropdownButtonFormField<String>(
+                value: _selectedState,
+                decoration: const InputDecoration(labelText: "Select State"),
+                items: SoilHelper.getAllStates().map((state) {
+                  return DropdownMenuItem(value: state, child: Text(state));
+                }).toList(),
+                onChanged: (value) {
+                  setState(() => _selectedState = value);
+                },
+                validator: (value) => value == null ? "Select a state" : null,
+              ),
+              const SizedBox(height: 16),
+
               // Number of Dwellers
               TextFormField(
                 controller: _dwellersController,
                 decoration: const InputDecoration(labelText: "Number of Dwellers"),
                 keyboardType: TextInputType.number,
-                validator: (value) =>
-                    value!.isEmpty ? "Enter number of dwellers" : null,
+                validator: (value) => value!.isEmpty ? "Enter number of dwellers" : null,
               ),
               const SizedBox(height: 16),
 
@@ -77,9 +112,7 @@ class _FeasibilityFormState extends State<FeasibilityForm> {
                 items: ["Flat", "Sloping"].map((type) {
                   return DropdownMenuItem(value: type, child: Text(type));
                 }).toList(),
-                onChanged: (value) {
-                  setState(() => _selectedRoofType = value!);
-                },
+                onChanged: (value) => setState(() => _selectedRoofType = value!),
               ),
               const SizedBox(height: 16),
 
@@ -89,14 +122,9 @@ class _FeasibilityFormState extends State<FeasibilityForm> {
                 decoration: const InputDecoration(labelText: "Roof Material"),
                 items: _roofMaterials.keys.map((mat) {
                   final coeff = _roofMaterials[mat]!;
-                  return DropdownMenuItem(
-                    value: mat,
-                    child: Text("$mat ($coeff)"),
-                  );
+                  return DropdownMenuItem(value: mat, child: Text("$mat ($coeff)"));
                 }).toList(),
-                onChanged: (value) {
-                  setState(() => _selectedRoofMaterial = value!);
-                },
+                onChanged: (value) => setState(() => _selectedRoofMaterial = value!),
               ),
               const SizedBox(height: 16),
 
@@ -114,15 +142,15 @@ class _FeasibilityFormState extends State<FeasibilityForm> {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    if (_formKey.currentState!.validate()) {
+                    if (_formKey.currentState!.validate() && _selectedState != null) {
                       Provider.of<UserProvider>(context, listen: false).setUserData(
                         numberOfDwellers: int.parse(_dwellersController.text),
                         roofArea: double.parse(_roofAreaController.text),
                         roofType: _selectedRoofType.toLowerCase(),
-                        roofMaterial: _selectedRoofMaterial, // just name
-                        runoffCoefficient:
-                            _roofMaterials[_selectedRoofMaterial]!, // coefficient
+                        roofMaterial: _selectedRoofMaterial,
+                        runoffCoefficient: _roofMaterials[_selectedRoofMaterial]!,
                         openSpace: double.parse(_spaceController.text),
+                        state: _selectedState!, // ✅ pass selected state
                       );
 
                       Navigator.push(

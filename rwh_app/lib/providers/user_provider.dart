@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../helpers/soil_helper.dart';
 
 class UserProvider with ChangeNotifier {
   // ✅ Firebase user (for login state)
@@ -8,14 +9,14 @@ class UserProvider with ChangeNotifier {
 
   // ✅ Form data
   int numberOfDwellers = 0;
-  double roofArea = 0.0;
+  double roofArea = 0;
   String roofType = ''; // flat/sloping
   String roofMaterial = ''; // e.g., "GI Sheet"
-  double runoffCoefficient = 0.0; // coefficient
-  double openSpace = 0.0;
-
-  // ✅ New field for storage type decision
-  bool limitedSpace = false;
+  double runoffCoefficient = 0; // coefficient
+  double openSpace = 0;
+  String soilType = ''; // soil type
+  String state = '';    // state
+  bool limitedSpace = false; // <-- Add this
 
   // ✅ Location data
   double? _latitude;
@@ -55,7 +56,7 @@ class UserProvider with ChangeNotifier {
     required String roofMaterial,
     required double runoffCoefficient,
     required double openSpace,
-    bool limitedSpace = false, // ✅ optional param
+    required String state,
   }) {
     this.numberOfDwellers = numberOfDwellers;
     this.roofArea = roofArea;
@@ -63,18 +64,21 @@ class UserProvider with ChangeNotifier {
     this.roofMaterial = roofMaterial;
     this.runoffCoefficient = runoffCoefficient;
     this.openSpace = openSpace;
-    this.limitedSpace = limitedSpace; // ✅ assign here
+    this.state = state;
+    this.soilType = SoilHelper.getSoilType(state);
+
     notifyListeners();
   }
 
   void clearUserData() {
     numberOfDwellers = 0;
-    roofArea = 0.0;
+    roofArea = 0;
     roofType = '';
     roofMaterial = '';
-    runoffCoefficient = 0.0;
-    openSpace = 0.0;
-    limitedSpace = false;
+    runoffCoefficient = 0;
+    openSpace = 0;
+    soilType = '';
+    state = '';
     notifyListeners();
   }
 }

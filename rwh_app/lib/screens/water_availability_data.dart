@@ -2,7 +2,7 @@
 
 class WaterAvailability {
   // Rainfall values (mm) – same for both tables
-  static const List<int> rainfall = [
+  static const List<double> rainfall = [
     100, 200, 300, 400, 500, 600, 800, 1000,
     1200, 1400, 1600, 1800, 2000
   ];
@@ -58,26 +58,24 @@ class WaterAvailability {
   // ==============================
   // Functions
   // ==============================
+// Modify to accept double
+static double? getFlatAvailability(double rooftopArea, double rainfallValue) {
+  int index = rainfall.indexOf(rainfallValue); // ✅ changed to int
+  if (index == -1) return null;
 
-   // ✅ Modify to accept double
-    static double? getFlatAvailability(double rooftopArea, int rainfallValue) {
-      int index = rainfall.indexOf(rainfallValue);
-      if (index == -1) return null;
+  int nearestKey = flatRoofData.keys.reduce((a, b) =>
+      (a - rooftopArea).abs() < (b - rooftopArea).abs() ? a : b);
 
-      // Find nearest available key
-      int nearestKey = flatRoofData.keys.reduce((a, b) =>
-          (a - rooftopArea).abs() < (b - rooftopArea).abs() ? a : b);
+  return flatRoofData[nearestKey]![index];
+}
 
-      return flatRoofData[nearestKey]![index];
-    }
+static double? getSlopingAvailability(double rooftopArea, double rainfallValue) {
+  int index = rainfall.indexOf(rainfallValue); // ✅ changed to int
+  if (index == -1) return null;
 
-    static double? getSlopingAvailability(double rooftopArea, int rainfallValue) {
-      int index = rainfall.indexOf(rainfallValue);
-      if (index == -1) return null;
+  int nearestKey = slopingRoofData.keys.reduce((a, b) =>
+      (a - rooftopArea).abs() < (b - rooftopArea).abs() ? a : b);
 
-      int nearestKey = slopingRoofData.keys.reduce((a, b) =>
-          (a - rooftopArea).abs() < (b - rooftopArea).abs() ? a : b);
-
-      return slopingRoofData[nearestKey]![index];
-    }
-  }
+  return slopingRoofData[nearestKey]![index];
+}
+}
