@@ -9,8 +9,29 @@ class UserProvider with ChangeNotifier {
   // ✅ Form data
   int numberOfDwellers = 0;
   double roofArea = 0;
-  String roofMaterial = '';
+  String roofType = ''; // flat/sloping
+  String roofMaterial = ''; // e.g., "GI Sheet"
+  double runoffCoefficient = 0; // coefficient
   double openSpace = 0;
+
+  // ✅ Location data
+  double? _latitude;
+  double? _longitude;
+
+  double? get latitude => _latitude;
+  double? get longitude => _longitude;
+
+  void setLocation(double latitude, double longitude) {
+    _latitude = latitude;
+    _longitude = longitude;
+    notifyListeners();
+  }
+
+  void clearLocation() {
+    _latitude = null;
+    _longitude = null;
+    notifyListeners();
+  }
 
   // --- Firebase user management ---
   void setUser(User? user) {
@@ -27,12 +48,16 @@ class UserProvider with ChangeNotifier {
   void setUserData({
     required int numberOfDwellers,
     required double roofArea,
+    required String roofType,
     required String roofMaterial,
+    required double runoffCoefficient,
     required double openSpace,
   }) {
     this.numberOfDwellers = numberOfDwellers;
     this.roofArea = roofArea;
+    this.roofType = roofType;
     this.roofMaterial = roofMaterial;
+    this.runoffCoefficient = runoffCoefficient;
     this.openSpace = openSpace;
     notifyListeners();
   }
@@ -40,7 +65,9 @@ class UserProvider with ChangeNotifier {
   void clearUserData() {
     numberOfDwellers = 0;
     roofArea = 0;
+    roofType = '';
     roofMaterial = '';
+    runoffCoefficient = 0;
     openSpace = 0;
     notifyListeners();
   }
