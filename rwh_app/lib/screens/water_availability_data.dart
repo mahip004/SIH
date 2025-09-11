@@ -59,15 +59,25 @@ class WaterAvailability {
   // Functions
   // ==============================
 
-  static double? getFlatAvailability(int rooftopArea, int rainfallValue) {
-    int index = rainfall.indexOf(rainfallValue);
-    if (index == -1 || !flatRoofData.containsKey(rooftopArea)) return null;
-    return flatRoofData[rooftopArea]![index];
-  }
+   // ✅ Modify to accept double
+    static double? getFlatAvailability(double rooftopArea, int rainfallValue) {
+      int index = rainfall.indexOf(rainfallValue);
+      if (index == -1) return null;
 
-  static double? getSlopingAvailability(int rooftopArea, int rainfallValue) {
-    int index = rainfall.indexOf(rainfallValue);
-    if (index == -1 || !slopingRoofData.containsKey(rooftopArea)) return null;
-    return slopingRoofData[rooftopArea]![index];
+      // Find nearest available key
+      int nearestKey = flatRoofData.keys.reduce((a, b) =>
+          (a - rooftopArea).abs() < (b - rooftopArea).abs() ? a : b);
+
+      return flatRoofData[nearestKey]![index];
+    }
+
+    static double? getSlopingAvailability(double rooftopArea, int rainfallValue) {
+      int index = rainfall.indexOf(rainfallValue);
+      if (index == -1) return null;
+
+      int nearestKey = slopingRoofData.keys.reduce((a, b) =>
+          (a - rooftopArea).abs() < (b - rooftopArea).abs() ? a : b);
+
+      return slopingRoofData[nearestKey]![index];
+    }
   }
-}

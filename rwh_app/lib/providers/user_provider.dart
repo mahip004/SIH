@@ -8,11 +8,14 @@ class UserProvider with ChangeNotifier {
 
   // ✅ Form data
   int numberOfDwellers = 0;
-  double roofArea = 0;
+  double roofArea = 0.0;
   String roofType = ''; // flat/sloping
   String roofMaterial = ''; // e.g., "GI Sheet"
-  double runoffCoefficient = 0; // coefficient
-  double openSpace = 0;
+  double runoffCoefficient = 0.0; // coefficient
+  double openSpace = 0.0;
+
+  // ✅ New field for storage type decision
+  bool limitedSpace = false;
 
   // ✅ Location data
   double? _latitude;
@@ -52,6 +55,7 @@ class UserProvider with ChangeNotifier {
     required String roofMaterial,
     required double runoffCoefficient,
     required double openSpace,
+    bool limitedSpace = false, // ✅ optional param
   }) {
     this.numberOfDwellers = numberOfDwellers;
     this.roofArea = roofArea;
@@ -59,16 +63,18 @@ class UserProvider with ChangeNotifier {
     this.roofMaterial = roofMaterial;
     this.runoffCoefficient = runoffCoefficient;
     this.openSpace = openSpace;
+    this.limitedSpace = limitedSpace; // ✅ assign here
     notifyListeners();
   }
 
   void clearUserData() {
     numberOfDwellers = 0;
-    roofArea = 0;
+    roofArea = 0.0;
     roofType = '';
     roofMaterial = '';
-    runoffCoefficient = 0;
-    openSpace = 0;
+    runoffCoefficient = 0.0;
+    openSpace = 0.0;
+    limitedSpace = false;
     notifyListeners();
   }
 }

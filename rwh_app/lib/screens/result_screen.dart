@@ -6,6 +6,7 @@ import 'package:geocoding/geocoding.dart';
 import '../providers/user_provider.dart';
 import 'water_availability_data.dart';
 import 'rainfall_data.dart'; // your rainfall map
+import 'structure.dart'; // import RWHStructure
 
 class ResultScreen extends StatefulWidget {
   const ResultScreen({super.key});
@@ -16,8 +17,7 @@ class ResultScreen extends StatefulWidget {
 
 class _ResultScreenState extends State<ResultScreen> {
   double waterAvailable = 0.0;
-  String suggestedStructure = "Calculating...";
-  double tankCapacityLitres = 0.0;
+  RWHStructure? rwh;
   String costEstimation = "";
   int scarcityDays = 120;
 
@@ -29,128 +29,108 @@ class _ResultScreenState extends State<ResultScreen> {
 
   Future<void> calculateWaterAvailability() async {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
-    final roofArea = userProvider.roofArea.toInt();
-    final roofType = userProvider.roofType.toLowerCase();
-    final numberOfDwellers = userProvider.numberOfDwellers;
-    final runoffCoefficient = userProvider.runoffCoefficient;
 
-    // Tank capacity
-    tankCapacityLitres = numberOfDwellers * scarcityDays * 10;
+    // Create RWHStructure object dynamically
+    rwh = RWHStructure(
+      roofArea: userProvider.roofArea,
+      numberOfDwellers: userProvider.numberOfDwellers,
+      dryDays: scarcityDays,
+      limitedSpace: userProvider.limitedSpace,
+    );
 
     // Get state from coordinates
     String? state;
     if (userProvider.latitude != null && userProvider.longitude != null) {
       state = await getStateFromCoordinates(userProvider.latitude!, userProvider.longitude!);
-      print(state);
     }
 
-    // Get rainfall for state, default to 800 mm if not found
-   int annualRainfall = state != null ? ((stateRainfall[state] ?? 800).toInt()) : 800;
-
+    // Get rainfall for state, default to 800 mm
+    int annualRainfall = state != null ? ((stateRainfall[state] ?? 800).toInt()) : 800;
 
     // Calculate water availability
-    if (roofType == "flat") {
-      final value = WaterAvailability.getFlatAvailability(roofArea, annualRainfall);
-      if (value != null) waterAvailable = value * 1000 * runoffCoefficient;
-    } else if (roofType == "sloping") {
-      final value = WaterAvailability.getSlopingAvailability(roofArea, annualRainfall);
-      if (value != null) waterAvailable = value * 1000 * runoffCoefficient;
-    }
-
-    // Suggested structure based on availability vs tank capacity
-    if (waterAvailable >= tankCapacityLitres) {
-      suggestedStructure = "Recharge Pit (enough collection)";
-    } else if (waterAvailable >= tankCapacityLitres / 2) {
-      suggestedStructure = "Recharge Trench (moderate collection)";
-    } else {
-      suggestedStructure = "Recharge Shaft (low collection)";
+    if (userProvider.roofType.toLowerCase() == "flat") {
+      final value = WaterAvailability.getFlatAvailability(userProvider.roofArea, annualRainfall);
+      if (value != null) waterAvailable = value * 1000 * userProvider.runoffCoefficient;
+    } else if (userProvider.roofType.toLowerCase() == "sloping") {
+      final value = WaterAvailability.getSlopingAvailability(userProvider.roofArea, annualRainfall);
+      if (value != null) waterAvailable = value * 1000 * userProvider.runoffCoefficient;
     }
 
     costEstimation =
-        "Estimated cost: ₹${(tankCapacityLitres / 100).toStringAsFixed(0)} – ₹${(tankCapacityLitres / 80).toStringAsFixed(0)}\n"
-        "Benefit: Can store ~${(tankCapacityLitres / 1000).toStringAsFixed(1)} KL of water";
+        "Estimated cost: ₹${(rwh!.storageVolume / 100).toStringAsFixed(0)} – ₹${(rwh!.storageVolume / 80).toStringAsFixed(0)}\n"
+        "Benefit: Can store ~${(rwh!.storageVolume / 1000).toStringAsFixed(1)} KL of water";
 
-    setState(() {}); // refresh UI
+    setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
-    final userProvider = Provider.of<UserProvider>(context);
+    if (rwh == null) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    final storageDim = rwh!.storageDimensions;
+    final recharge = rwh!.rechargeStructure;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text("Feasibility Report", style: TextStyle(color: Colors.white)),
         backgroundColor: const Color(0xFF0A66C2),
       ),
-      body: suggestedStructure == "Calculating..."
-          ? const Center(child: CircularProgressIndicator())
-          : Container(
-              color: Colors.grey[100],
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      "Rainwater Harvesting Insights",
-                      style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF0A66C2)),
-                    ),
-                    const SizedBox(height: 20),
-                    _buildInsightCard(
-                      icon: FontAwesomeIcons.houseChimney,
-                      title: "Suggested Structure",
-                      value: suggestedStructure,
-                    ),
-                    _buildInsightCard(
-                      icon: FontAwesomeIcons.water,
-                      title: "Runoff Generation Capacity",
-                      value: "${waterAvailable.toStringAsFixed(0)} litres/year (with runoff coefficient)",
-                    ),
-                    _buildInsightCard(
-                      icon: FontAwesomeIcons.database,
-                      title: "Required Tank Capacity",
-                      value:
-                          "${tankCapacityLitres.toStringAsFixed(0)} litres (For ${userProvider.numberOfDwellers} persons, $scarcityDays days)",
-                    ),
-                    _buildInsightCard(
-                      icon: FontAwesomeIcons.coins,
-                      title: "Cost Estimation & Benefit",
-                      value: costEstimation,
-                    ),
-                    _buildInsightCard(
-                      icon: FontAwesomeIcons.draftingCompass,
-                      title: "Sketch of Structure",
-                      value: "Proposed trench/recharge structure",
-                      imagePath: "assets/recharge_sketch.png",
-                    ),
-                    const SizedBox(height: 30),
-                    Center(
-                      child: ElevatedButton.icon(
-                        onPressed: () => Navigator.pop(context),
-                        icon: const Icon(Icons.arrow_back),
-                        label: const Text("Back"),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF0A66C2),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                          textStyle: const TextStyle(fontSize: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+      body: Container(
+        color: Colors.grey[100],
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                "Rainwater Harvesting Insights",
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF0A66C2)),
+              ),
+              const SizedBox(height: 20),
+              _buildInsightCard(
+                icon: FontAwesomeIcons.houseChimney,
+                title: "Storage Structure",
+                value:
+                    "${rwh!.storageType}\nVolume: ${rwh!.storageVolume.toStringAsFixed(0)} L\nDimensions: ${storageDim['diameter']!.toStringAsFixed(1)} m dia × ${storageDim['height']!.toStringAsFixed(1)} m height",
+              ),
+              _buildInsightCard(
+                icon: FontAwesomeIcons.draftingCompass,
+                title: "Recharge Structure",
+                value:
+                    "${recharge['type']}\nRecommended Dimensions: ${recharge['dimensions']}\nEstimated Runoff Available: ${waterAvailable.toStringAsFixed(0)} L/year",
+                imagePath: "assets/recharge_sketch.png",
+              ),
+              _buildInsightCard(
+                icon: FontAwesomeIcons.coins,
+                title: "Cost Estimation & Benefit",
+                value: costEstimation,
+              ),
+              const SizedBox(height: 30),
+              Center(
+                child: ElevatedButton.icon(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.arrow_back),
+                  label: const Text("Back"),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF0A66C2),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    textStyle: const TextStyle(fontSize: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
                 ),
               ),
-            ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
-  // Helper Card Widget
   Widget _buildInsightCard({
     required IconData icon,
     required String title,
@@ -175,12 +155,9 @@ class _ResultScreenState extends State<ResultScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(title,
-                          style: const TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 16)),
+                      Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                       const SizedBox(height: 6),
-                      Text(value,
-                          style: const TextStyle(fontSize: 15, color: Colors.black87)),
+                      Text(value, style: const TextStyle(fontSize: 15, color: Colors.black87)),
                     ],
                   ),
                 ),
