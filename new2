@@ -1,0 +1,33 @@
+    class HomeScreen extends StatelessWidget {
+      const HomeScreen({super.key});
+
+      // ... your _confirmLogout and _logout methods
+
+      @override
+      Widget build(BuildContext context) {
+        // ... your build method code
+      } // <--- End of build method
+
+      // Define _buildHomeCard here
+      Widget _buildHomeCard(
+        BuildContext context, {
+        required IconData icon,
+        required String title,
+        required String subtitle,        required List<Color> gradientColors,
+        required VoidCallback onTap,
+      }) {
+        return Card(
+          // ... your card implementation
+          child: InkWell(
+            onTap: onTap,
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                // ... your card content
+              ),
+            ),
+          ),
+        );
+      }
+    } // <--- End of HomeScreen class
+    

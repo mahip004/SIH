@@ -20,9 +20,9 @@ class _ResultScreenState extends State<ResultScreen> {
   String costEstimation = "";
   int scarcityDays = 120;
 
+  Map<String, double>? storageDim;
+  Map<String, dynamic>? recharge;
   late RWHStructure rwh;
-  late Map<String, double> storageDim;
-  late Map<String, dynamic> recharge;
 
   @override
   void initState() {
@@ -53,10 +53,10 @@ class _ResultScreenState extends State<ResultScreen> {
     final rawRainfall = (stateRainfall[state] ?? 800).toDouble();
     final rainfall = _nearestRainfall(rawRainfall);
 
-    // Initialize RWHStructure
+    // Initialize RWHStructure object
     rwh = RWHStructure(
-      roofArea: roofArea,
-      numberOfDwellers: numberOfDwellers,
+      roofArea: userProvider.roofArea,
+      numberOfDwellers: userProvider.numberOfDwellers,
       dryDays: scarcityDays,
       limitedSpace: userProvider.limitedSpace,
     );
@@ -86,101 +86,298 @@ class _ResultScreenState extends State<ResultScreen> {
         "Estimated cost: ₹${(tankCapacityLitres / 100).toStringAsFixed(0)} – ₹${(tankCapacityLitres / 80).toStringAsFixed(0)}\n"
         "Benefit: Can store ~${(tankCapacityLitres / 1000).toStringAsFixed(1)} KL of water";
 
-    setState(() {}); // Refresh UI
+    setState(() {}); // refresh UI
   }
 
   @override
   Widget build(BuildContext context) {
     final userProvider = Provider.of<UserProvider>(context);
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          "Feasibility Report",
-          style: TextStyle(color: Colors.white),
-        ),
-        backgroundColor: const Color(0xFF0A66C2),
-      ),
       body: suggestedStructure == "Calculating..."
-          ? const Center(child: CircularProgressIndicator())
-          : Container(
-              color: Colors.grey[100],
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
+          ? Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    const Color(0xFF1A73E8).withOpacity(0.05),
+                    Colors.white,
+                  ],
+                ),
+              ),
+              child: const Center(
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text(
-                      "Rainwater Harvesting Insights",
+                    CircularProgressIndicator(
+                      color: Color(0xFF1A73E8),
+                    ),
+                    SizedBox(height: 16),
+                    Text(
+                      "Calculating your results...",
                       style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF0A66C2)),
+                        color: Color(0xFF1A73E8),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
-                    const SizedBox(height: 20),
-
-                    // Storage Tank
-                    _buildInsightCard(
-                      icon: FontAwesomeIcons.database,
-                      title: "Storage Tank",
-                      value:
-                          "${rwh.storageType}\nVolume: ${rwh.storageVolume.toStringAsFixed(0)} L\n"
-                          "Dimensions: ${storageDim['diameter']!.toStringAsFixed(1)} m dia × "
-                          "${storageDim['height']!.toStringAsFixed(1)} m height",
-                    ),
-
-                    // Recharge Structure
-                    _buildInsightCard(
-                      icon: FontAwesomeIcons.seedling,
-                      title: "Recharge Structure",
-                      value:
-                          "${recharge['type']}\nRecommended Dimensions: ${recharge['dimensions']}\n"
-                          "Estimated Runoff Available: ${waterAvailable.toStringAsFixed(0)} L/year",
-                    ),
-
-                    // Other insights
-                    _buildInsightCard(
-                      icon: FontAwesomeIcons.water,
-                      title: "Runoff Generation Capacity",
-                      value:
-                          "${waterAvailable.toStringAsFixed(0)} litres/year (with runoff coefficient)",
-                    ),
-                    _buildInsightCard(
-                      icon: FontAwesomeIcons.database,
-                      title: "Required Tank Capacity",
-                      value:
-                          "${tankCapacityLitres.toStringAsFixed(0)} litres (For ${userProvider.numberOfDwellers} persons, $scarcityDays days)",
-                    ),
-                    _buildInsightCard(
-                      icon: FontAwesomeIcons.coins,
-                      title: "Cost Estimation & Benefit",
-                      value: costEstimation,
-                    ),
-                    _buildInsightCard(
-                      icon: FontAwesomeIcons.seedling,
-                      title: "Soil Type",
-                      value: userProvider.soilType,
-                    ),
-                    _buildInsightCard(
-                      icon: FontAwesomeIcons.draftingCompass,
-                      title: "Sketch of Structure",
-                      value: "Proposed trench/recharge structure",
-                      imagePath: "assets/recharge_sketch.png",
-                    ),
-                    const SizedBox(height: 30),
-                    Center(
-                      child: ElevatedButton.icon(
-                        onPressed: () => Navigator.pop(context),
-                        icon: const Icon(Icons.arrow_back),
-                        label: const Text("Back"),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF0A66C2),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 24, vertical: 12),
-                          textStyle: const TextStyle(fontSize: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
+                  ],
+                ),
+              ),
+            )
+          : Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    const Color(0xFF1A73E8).withOpacity(0.05),
+                    Colors.white,
+                  ],
+                ),
+              ),
+              child: SafeArea(
+                child: Column(
+                  children: [
+                    // Custom App Bar
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Color(0xFF1A73E8), Color(0xFF2A93D5)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black12,
+                            blurRadius: 10,
+                            offset: Offset(0, 4),
                           ),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          GestureDetector(
+                            onTap: () => Navigator.pop(context),
+                            child: const Icon(
+                              Icons.arrow_back_ios,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          const Text(
+                            "Feasibility Report",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const Spacer(),
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(
+                              Icons.save_alt,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // Content
+                    Expanded(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.all(20),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        "Rainwater Harvesting Insights",
+                                        style: TextStyle(
+                                          fontSize: 24,
+                                          fontWeight: FontWeight.bold,
+                                          color: Color(0xFF1A73E8),
+                                          letterSpacing: 0.5,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 6),
+                                      Text(
+                                        "Based on your location and property details",
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.grey[700],
+                                          height: 1.3,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF1A73E8).withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  child: const Icon(
+                                    Icons.insights,
+                                    color: Color(0xFF1A73E8),
+                                    size: 28,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 24),
+
+                            // Storage Tank
+                            _buildInsightCard(
+                              icon: FontAwesomeIcons.database,
+                              title: "Storage Tank",
+                              value:
+                                  "${rwh.storageType}\nVolume: ${rwh.storageVolume.toStringAsFixed(0)} L\n"
+                                  "Dimensions: ${storageDim?['diameter']?.toStringAsFixed(1) ?? 0} m dia × "
+                                  "${storageDim?['height']?.toStringAsFixed(1) ?? 0} m height",
+                              gradientColors: const [Color(0xFF1A73E8), Color(0xFF2A93D5)],
+                            ),
+
+                            // Recharge Structure
+                            _buildInsightCard(
+                              icon: FontAwesomeIcons.seedling,
+                              title: "Recharge Structure",
+                              value:
+                                  "${recharge?['type'] ?? 'N/A'}\nRecommended Dimensions: ${recharge?['dimensions'] ?? 'N/A'}\n"
+                                  "Estimated Runoff Available: ${waterAvailable.toStringAsFixed(0)} L/year",
+                              gradientColors: const [Color(0xFF26A69A), Color(0xFF4DB6AC)],
+                            ),
+
+                            // Other insights
+                            _buildInsightCard(
+                              icon: FontAwesomeIcons.water,
+                              title: "Runoff Generation Capacity",
+                              value:
+                                  "${waterAvailable.toStringAsFixed(0)} litres/year (with runoff coefficient)",
+                              gradientColors: const [Color(0xFF5C6BC0), Color(0xFF7986CB)],
+                            ),
+                            _buildInsightCard(
+                              icon: FontAwesomeIcons.database,
+                              title: "Required Tank Capacity",
+                              value:
+                                  "${tankCapacityLitres.toStringAsFixed(0)} litres (For ${userProvider.numberOfDwellers} persons, $scarcityDays days)",
+                              gradientColors: const [Color(0xFF1A73E8), Color(0xFF2A93D5)],
+                            ),
+                            _buildInsightCard(
+                              icon: FontAwesomeIcons.coins,
+                              title: "Cost Estimation & Benefit",
+                              value: costEstimation,
+                              gradientColors: const [Color(0xFFFF9800), Color(0xFFFFB74D)],
+                            ),
+                            _buildInsightCard(
+                              icon: FontAwesomeIcons.seedling,
+                              title: "Soil Type",
+                              value: userProvider.soilType,
+                              gradientColors: const [Color(0xFF26A69A), Color(0xFF4DB6AC)],
+                            ),
+                            _buildInsightCard(
+                              icon: FontAwesomeIcons.draftingCompass,
+                              title: "Sketch of Structure",
+                              value: "Proposed trench/recharge structure",
+                              imagePath: "assets/recharge_sketch.png",
+                              gradientColors: const [Color(0xFF5C6BC0), Color(0xFF7986CB)],
+                            ),
+
+                            const SizedBox(height: 30),
+
+                            // Action Buttons
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Container(
+                                    height: 56,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(16),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.grey.withOpacity(0.2),
+                                          blurRadius: 10,
+                                          offset: const Offset(0, 4),
+                                        ),
+                                      ],
+                                    ),
+                                    child: ElevatedButton.icon(
+                                      onPressed: () => Navigator.pop(context),
+                                      icon: const Icon(Icons.arrow_back),
+                                      label: const Text("Back"),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.white,
+                                        foregroundColor: const Color(0xFF1A73E8),
+                                        elevation: 0,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(16),
+                                          side: BorderSide(
+                                            color: const Color(0xFF1A73E8).withOpacity(0.3),
+                                            width: 1,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Container(
+                                    height: 56,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(16),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: const Color(0xFF1A73E8).withOpacity(0.3),
+                                          blurRadius: 10,
+                                          offset: const Offset(0, 4),
+                                        ),
+                                      ],
+                                    ),
+                                    child: ElevatedButton.icon(
+                                      onPressed: () {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: const Text('Report saved successfully!'),
+                                            backgroundColor: Colors.green[600],
+                                            behavior: SnackBarBehavior.floating,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(10),
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                      icon: const Icon(Icons.save),
+                                      label: const Text("Save Report"),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: const Color(0xFF1A73E8),
+                                        foregroundColor: Colors.white,
+                                        elevation: 0,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(16),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
                       ),
                     ),
@@ -191,51 +388,112 @@ class _ResultScreenState extends State<ResultScreen> {
     );
   }
 
-  Widget _buildInsightCard(
-      {required IconData icon,
-      required String title,
-      required String value,
-      String? imagePath}) {
-    return Card(
-      elevation: 3,
-      margin: const EdgeInsets.symmetric(vertical: 10),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(icon, color: const Color(0xFF0A66C2), size: 28),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
+  Widget _buildInsightCard({
+    required IconData icon,
+    required String title,
+    required String value,
+    String? imagePath,
+    required List<Color> gradientColors,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: gradientColors[0].withOpacity(0.15),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: Ink(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: () {},
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(title,
-                          style: const TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 16)),
-                      const SizedBox(height: 6),
-                      Text(value,
-                          style: const TextStyle(
-                              fontSize: 15, color: Colors.black87)),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: gradientColors,
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(icon, size: 24, color: Colors.white),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              title,
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF2D3748),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              value,
+                              style: TextStyle(
+                                fontSize: 15,
+                                color: Colors.grey[800],
+                                height: 1.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ],
                   ),
-                ),
-              ],
-            ),
-            if (imagePath != null) ...[
-              const SizedBox(height: 12),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.asset(imagePath, height: 160, fit: BoxFit.cover),
+                  if (imagePath != null) ...[
+                    const SizedBox(height: 16),
+                    Container(
+                      width: double.infinity,
+                      height: 180,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.asset(
+                          imagePath,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
               ),
-            ],
-          ],
+            ),
+          ),
         ),
       ),
     );
   }
-}
+} // ✅ End of _ResultScreenState class

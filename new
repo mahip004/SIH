@@ -1,0 +1,23 @@
+    @override
+    Widget build(BuildContext context) {
+      return Scaffold(
+        body: Container(
+          // ... your container decoration
+          child: SafeArea(
+            child: Column(  // <--- Opening brace for Column
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // ... Custom App Bar Container
+                Expanded(
+                  child: ListView(
+                    // ... your list view content
+                  ),
+                ),
+              ],
+            ), // <--- Add this closing brace for the Column
+          ),
+        ),
+      ); // <--- Add this closing brace for the Scaffold (or its child if it's the last one)
+    } // <--- This is the closing brace for the build method
+    // ... _buildHomeCard method would be here
+    } // <--- This is the closing brace for the HomeScreen class
