@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/user_provider.dart';
 import 'result_screen.dart';
 
 class PastReportsScreen extends StatelessWidget {
@@ -21,6 +23,8 @@ class PastReportsScreen extends StatelessWidget {
         "structure": "Recharge Shaft",
       },
     ];
+
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
 
     return Scaffold(
       appBar: AppBar(
@@ -70,7 +74,7 @@ class PastReportsScreen extends StatelessWidget {
                         color: Colors.grey,
                       ),
                       onTap: () {
-                        // TODO: Pass data to ResultScreen if you want full detail
+                        // Pass stored state + soil type to ResultScreen
                         Navigator.push(
                           context,
                           MaterialPageRoute(

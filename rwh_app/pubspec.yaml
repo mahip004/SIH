@@ -48,3 +48,5 @@ flutter:
     - assets/google_logo.png
     - assets/recharge_sketch.png
     - assets/harvesting.jpg
+    - assets/soil_data.json
+

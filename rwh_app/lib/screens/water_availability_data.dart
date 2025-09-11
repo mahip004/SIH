@@ -1,15 +1,11 @@
-// water_availability_data.dart
-
 class WaterAvailability {
-  // Rainfall values (mm) – same for both tables
+  // Rainfall values (mm)
   static const List<int> rainfall = [
     100, 200, 300, 400, 500, 600, 800, 1000,
     1200, 1400, 1600, 1800, 2000
   ];
 
-  // ==============================
-  // Table 1: Flat Roofs
-  // ==============================
+  // Flat roof data – full original dataset
   static const Map<int, List<double>> flatRoofData = {
     20: [1.6, 3.2, 4.8, 6.4, 8, 9.6, 12.8, 16, 19.2, 22.4, 25.6, 28.8, 32],
     30: [2.4, 4.8, 7.2, 9.6, 12, 14.4, 19.2, 24, 28.8, 33.6, 38.4, 43.2, 48],
@@ -31,9 +27,7 @@ class WaterAvailability {
     3000: [240, 480, 720, 960, 1200, 1440, 1920, 2400, 2880, 3360, 3840, 4320, 4800],
   };
 
-  // ==============================
-  // Table 2: Sloping Roofs
-  // ==============================
+  // Sloping roof data – full original dataset
   static const Map<int, List<double>> slopingRoofData = {
     20: [1.9, 3.8, 5.7, 7.6, 9.5, 11.4, 15.2, 19, 22.8, 26.6, 30.4, 34.2, 38],
     30: [2.9, 5.7, 8.6, 11.4, 14.3, 17.1, 22.8, 28.5, 34.2, 39.9, 45.6, 51.3, 57],
@@ -56,18 +50,48 @@ class WaterAvailability {
   };
 
   // ==============================
-  // Functions
+  // Functions – use nearest value
   // ==============================
 
-  static double? getFlatAvailability(int rooftopArea, int rainfallValue) {
-    int index = rainfall.indexOf(rainfallValue);
-    if (index == -1 || !flatRoofData.containsKey(rooftopArea)) return null;
-    return flatRoofData[rooftopArea]![index];
+  static double? getFlatAvailability(double rooftopArea, double rainfallValue) {
+    int nearestRainIndex = _getNearestIndex(rainfall, rainfallValue);
+    int nearestRoofArea = _getNearestKey(flatRoofData.keys.toList(), rooftopArea);
+    return flatRoofData[nearestRoofArea]?[nearestRainIndex];
   }
 
-  static double? getSlopingAvailability(int rooftopArea, int rainfallValue) {
-    int index = rainfall.indexOf(rainfallValue);
-    if (index == -1 || !slopingRoofData.containsKey(rooftopArea)) return null;
-    return slopingRoofData[rooftopArea]![index];
+  static double? getSlopingAvailability(double rooftopArea, double rainfallValue) {
+    int nearestRainIndex = _getNearestIndex(rainfall, rainfallValue);
+    int nearestRoofArea = _getNearestKey(slopingRoofData.keys.toList(), rooftopArea);
+    return slopingRoofData[nearestRoofArea]?[nearestRainIndex];
+  }
+
+  // ==============================
+  // Helper functions
+  // ==============================
+
+  static int _getNearestIndex(List<int> list, double value) {
+    int nearest = 0;
+    double minDiff = double.infinity;
+    for (int i = 0; i < list.length; i++) {
+      double diff = (list[i] - value).abs();
+      if (diff < minDiff) {
+        minDiff = diff;
+        nearest = i;
+      }
+    }
+    return nearest;
+  }
+
+  static int _getNearestKey(List<int> keys, double value) {
+    int nearest = keys[0];
+    double minDiff = (keys[0] - value).abs();
+    for (int key in keys) {
+      double diff = (key - value).abs();
+      if (diff < minDiff) {
+        minDiff = diff;
+        nearest = key;
+      }
+    }
+    return nearest;
   }
 }
