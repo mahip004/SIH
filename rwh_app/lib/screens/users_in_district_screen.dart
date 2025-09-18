@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../providers/user_provider.dart';
+import 'profile_screen.dart';
 
 class UsersInDistrictScreen extends StatelessWidget {
   const UsersInDistrictScreen({super.key});
@@ -165,7 +166,7 @@ class _NoDistrictWidget extends StatelessWidget {
               onPressed: () {
                 Navigator.of(context).pop();
                 Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const ProfileScreen()),
+                  MaterialPageRoute(builder: (_) => ProfileScreen()),
                 );
               },
             ),

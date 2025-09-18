@@ -4,6 +4,7 @@ import 'feasibility_form.dart';
 import 'trends_screen.dart';
 import 'past_reports_screen.dart';
 import 'profile_screen.dart';
+import 'users_in_district_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -165,6 +166,20 @@ class HomeScreen extends StatelessWidget {
                         Navigator.push(
                           context,
                           MaterialPageRoute(builder: (_) => const PastReportsScreen()),
+                        );
+                      },
+                    ),
+
+                    _buildHomeCard(
+                      context,
+                      icon: FontAwesomeIcons.users,
+                      title: "Users in Your District",
+                      subtitle: "See how many others are using RWH in your area",
+                      gradientColors: const [Color(0xFF43CEA2), Color(0xFF185A9D)],
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const UsersInDistrictScreen()),
                         );
                       },
                     ),
