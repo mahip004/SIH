@@ -134,25 +134,9 @@ class _LoginScreenState extends State<LoginScreen> {
       }
 
       // --- NAVIGATE TO HOME ---
+      // Router is driven by authStateChanges now; simply pop to root and let StreamBuilder decide
       if (mounted) {
-        Navigator.of(context).pushReplacement(
-          PageRouteBuilder(
-            pageBuilder: (_, __, ___) => const HomeScreen(),
-            transitionsBuilder: (_, animation, __, child) {
-              const begin = Offset(0.0, 1.0);
-              const end = Offset.zero;
-              const curve = Curves.easeOutCubic;
-
-              var tween = Tween(begin: begin, end: end)
-                  .chain(CurveTween(curve: curve));
-
-              return SlideTransition(
-                position: animation.drive(tween),
-                child: child,
-              );
-            },
-          ),
-        );
+        Navigator.of(context).maybePop();
       }
     } catch (e) {
       debugPrint('Error during Google Sign-In: $e');

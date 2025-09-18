@@ -3,6 +3,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'feasibility_form.dart';
 import 'trends_screen.dart';
 import 'past_reports_screen.dart';
+import 'profile_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -25,7 +26,7 @@ class HomeScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Custom App Bar (removed logout)
+              // Custom App Bar with Profile
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                 decoration: BoxDecoration(
@@ -46,14 +47,29 @@ class HomeScreen extends StatelessWidget {
                   children: [
                     const Icon(Icons.water_drop, color: Colors.white, size: 24),
                     const SizedBox(width: 10),
-                    const Text(
-                      "Rainwater Hub",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
+                    const Expanded(
+                      child: Text(
+                        "Rainwater Hub",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
+                    InkWell(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const ProfileScreen()),
+                        );
+                      },
+                      child: const CircleAvatar(
+                        radius: 18,
+                        backgroundColor: Colors.white,
+                        child: Icon(Icons.person, color: Color(0xFF1A73E8)),
+                      ),
+                    )
                   ],
                 ),
               ),
