@@ -8,6 +8,9 @@ import 'rainfall_data.dart';
 import 'rainfall_intensity_data.dart';
 import 'pipe_diameter_data.dart';
 import '../helpers/location_helper.dart';
+import '../helpers/recharge_helper.dart';
+import '../models/report_model.dart';
+import '../services/report_storage_service.dart';
 
 class ResultScreen extends StatefulWidget {
   const ResultScreen({super.key});
@@ -29,6 +32,9 @@ class _ResultScreenState extends State<ResultScreen> {
   Map<String, dynamic>? recharge;
   late RWHStructure rwh;
   bool isFetchingPipe = false;
+  bool isSavingReport = false;
+  RechargeConfig? selectedRecharge;
+  String? structureImagePath;
 
   @override
   void initState() {
@@ -96,7 +102,20 @@ class _ResultScreenState extends State<ResultScreen> {
     );
 
     storageDim = rwh.storageDimensions;
-    recharge = rwh.rechargeStructure;
+
+    // Select recharge structure dynamically from JSON config based on roof area
+    selectedRecharge = await RechargeHelper.selectByRoofArea(roofArea);
+    if (selectedRecharge != null) {
+      recharge = {
+        'type': selectedRecharge!.label,
+        'dimensions': selectedRecharge!.dimensions,
+        'image': selectedRecharge!.image,
+      };
+      structureImagePath = selectedRecharge!.image;
+    } else {
+      recharge = rwh.rechargeStructure; // fallback to static logic
+      structureImagePath = 'assets/recharge_sketch.png';
+    }
 
     // Calculate water availability
     if (roofType == "flat") {
@@ -112,13 +131,16 @@ class _ResultScreenState extends State<ResultScreen> {
     }
 
     // Suggested structure
+    String suffixLabel;
     if (waterAvailable >= tankCapacityLitres) {
-      suggestedStructure = "Recharge Pit (enough collection)";
+      suffixLabel = "enough collection";
     } else if (waterAvailable >= tankCapacityLitres / 2) {
-      suggestedStructure = "Recharge Trench (moderate collection)";
+      suffixLabel = "moderate collection";
     } else {
-      suggestedStructure = "Recharge Shaft (low collection)";
+      suffixLabel = "low collection";
     }
+    final baseLabel = selectedRecharge?.label ?? (recharge?['type'] ?? 'Recharge Structure');
+    suggestedStructure = "$baseLabel ($suffixLabel)";
 
     costEstimation =
     "Estimated cost: ₹${(tankCapacityLitres / 100).toStringAsFixed(0)} – ₹${(tankCapacityLitres / 80).toStringAsFixed(0)}\n"
@@ -170,6 +192,92 @@ class _ResultScreenState extends State<ResultScreen> {
     }
 
     setState(() {});
+  }
+
+  Future<void> _saveReport() async {
+    if (isSavingReport) return;
+
+    setState(() {
+      isSavingReport = true;
+    });
+
+    try {
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+
+      // Create report model
+      final report = ReportModel(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        date: DateTime.now(),
+        state: userProvider.state,
+        soilType: userProvider.soilType,
+        numberOfDwellers: userProvider.numberOfDwellers,
+        roofArea: userProvider.roofArea,
+        roofType: userProvider.roofType,
+        roofMaterial: userProvider.roofMaterial,
+        runoffCoefficient: userProvider.runoffCoefficient,
+        openSpace: userProvider.openSpace,
+        waterAvailable: waterAvailable,
+        suggestedStructure: suggestedStructure,
+        tankCapacityLitres: tankCapacityLitres,
+        costEstimation: costEstimation,
+        storageDimensions: storageDim,
+        rechargeStructure: recharge,
+        pipeInfo: selectedPipe != null
+            ? "Pipe: ${selectedPipe!.diameter} mm dia × ${selectedPipe!.width} mm width"
+            : "No suitable pipe found",
+      );
+
+      // Save to local storage
+      final success = await ReportStorageService.saveReport(report);
+
+      if (success) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Report saved successfully!'),
+              backgroundColor: Colors.green[600],
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Failed to save report. Please try again.'),
+              backgroundColor: Colors.red[600],
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      print('Error saving report: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Error saving report. Please try again.'),
+            backgroundColor: Colors.red[600],
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          isSavingReport = false;
+        });
+      }
+    }
   }
 
   @override
@@ -399,8 +507,8 @@ class _ResultScreenState extends State<ResultScreen> {
                       _buildInsightCard(
                         icon: FontAwesomeIcons.draftingCompass,
                         title: "Sketch of Structure",
-                        value: "Proposed trench/recharge structure",
-                        imagePath: "assets/recharge_sketch.png",
+                        value: selectedRecharge?.label ?? (recharge?['type'] ?? 'Proposed recharge structure'),
+                        imagePath: (recharge != null ? (recharge!['image'] as String?) : null) ?? structureImagePath ?? "assets/recharge_sketch.png",
                         gradientColors: const [
                           Color(0xFF5C6BC0),
                           Color(0xFF7986CB)
@@ -463,23 +571,18 @@ class _ResultScreenState extends State<ResultScreen> {
                                 ],
                               ),
                               child: ElevatedButton.icon(
-                                onPressed: () {
-                                  ScaffoldMessenger.of(context)
-                                      .showSnackBar(
-                                    SnackBar(
-                                      content: const Text(
-                                          'Report saved successfully!'),
-                                      backgroundColor: Colors.green[600],
-                                      behavior: SnackBarBehavior.floating,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                        BorderRadius.circular(10),
-                                      ),
-                                    ),
-                                  );
-                                },
-                                icon: const Icon(Icons.save),
-                                label: const Text("Save Report"),
+                                onPressed: isSavingReport ? null : _saveReport,
+                                icon: isSavingReport
+                                    ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                                    : const Icon(Icons.save),
+                                label: Text(isSavingReport ? "Saving..." : "Save Report"),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor:
                                   const Color(0xFF1A73E8),
@@ -599,10 +702,19 @@ class _ResultScreenState extends State<ResultScreen> {
                       ),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(12),
-                        child: Image.asset(
-                          imagePath,
-                          fit: BoxFit.cover,
-                        ),
+                        child: imagePath.startsWith('http')
+                            ? Image.network(
+                                imagePath,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) => Image.asset(
+                                  'assets/recharge_sketch.png',
+                                  fit: BoxFit.cover,
+                                ),
+                              )
+                            : Image.asset(
+                                imagePath,
+                                fit: BoxFit.cover,
+                              ),
                       ),
                     ),
                   ],
