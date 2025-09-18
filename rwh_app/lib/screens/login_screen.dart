@@ -74,6 +74,7 @@ class _LoginScreenState extends State<LoginScreen> {
           user.uid,
           user.displayName ?? "No Name",
           user.email ?? "No Email",
+          "Jabalpur",
         );
         debugPrint("✅ User data saved successfully for UID: ${user.uid}");
       } else {

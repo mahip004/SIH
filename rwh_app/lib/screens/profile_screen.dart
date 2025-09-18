@@ -4,10 +4,59 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
 import '../services/auth_service.dart';
+import '../services/firestore_service.dart'; // <-- Add this import
 import 'login_screen.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  final TextEditingController _districtController = TextEditingController();
+  String? _initialDistrict;
+  bool _isSaving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDistrict();
+  }
+
+  Future<void> _loadDistrict() async {
+    final user = context.read<UserProvider>().user ?? FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final doc = await FirestoreService().getUser(user.uid);
+      final data = doc.data();
+      setState(() {
+        _initialDistrict = data?['district'] ?? '';
+        _districtController.text = _initialDistrict ?? '';
+      });
+    }
+  }
+
+  Future<void> _saveDistrict() async {
+    final user = context.read<UserProvider>().user ?? FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+    setState(() => _isSaving = true);
+    try {
+      await FirestoreService().updateDistrict(user.uid, _districtController.text.trim());
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('District updated!')),
+      );
+      setState(() {
+        _initialDistrict = _districtController.text.trim();
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error updating district: $e')),
+      );
+    } finally {
+      setState(() => _isSaving = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -39,6 +88,39 @@ class ProfileScreen extends StatelessWidget {
               const SizedBox(height: 24),
               _InfoTile(label: 'Username', value: user?.displayName ?? '-'),
               const SizedBox(height: 12),
+              // --- District Input ---
+              TextField(
+                controller: _districtController,
+                decoration: InputDecoration(
+                  labelText: 'District',
+                  hintText: 'Enter your district',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  suffixIcon: _isSaving
+                      ? const Padding(
+                          padding: EdgeInsets.all(8.0),
+                          child: SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        )
+                      : IconButton(
+                          icon: const Icon(Icons.save),
+                          onPressed: _isSaving
+                              ? null
+                              : () {
+                                  if (_districtController.text.trim().isNotEmpty &&
+                                      _districtController.text.trim() != _initialDistrict) {
+                                    _saveDistrict();
+                                  }
+                                },
+                        ),
+                ),
+                enabled: !_isSaving,
+              ),
+              const SizedBox(height: 12),
               const Spacer(),
               SizedBox(
                 width: double.infinity,
@@ -52,18 +134,10 @@ class ProfileScreen extends StatelessWidget {
                   onPressed: () async {
                     await AuthService().signOut();
                     if (context.mounted) {
-                      if (kIsWeb) {
-                        // On web, Navigator stack can be odd after redirects; replace to login
-                        Navigator.of(context).pushAndRemoveUntil(
-                          MaterialPageRoute(builder: (_) => const LoginScreen()),
-                          (route) => false,
-                        );
-                      } else {
-                        Navigator.of(context).pushAndRemoveUntil(
-                          MaterialPageRoute(builder: (_) => const LoginScreen()),
-                          (route) => false,
-                        );
-                      }
+                      Navigator.of(context).pushAndRemoveUntil(
+                        MaterialPageRoute(builder: (_) => const LoginScreen()),
+                        (route) => false,
+                      );
                       context.read<UserProvider>().clearUser();
                       context.read<UserProvider>().clearLocation();
                     }
@@ -142,4 +216,3 @@ class _InfoTile extends StatelessWidget {
     );
   }
 }
-
