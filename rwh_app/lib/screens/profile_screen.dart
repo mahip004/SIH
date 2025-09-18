@@ -37,14 +37,8 @@ class ProfileScreen extends StatelessWidget {
                 style: TextStyle(fontSize: 14, color: Colors.grey[700]),
               ),
               const SizedBox(height: 24),
-              _InfoTile(label: 'UID', value: user?.uid ?? '-'),
+              _InfoTile(label: 'Username', value: user?.displayName ?? '-'),
               const SizedBox(height: 12),
-              _InfoTile(
-                label: 'Signed in with',
-                value: (user?.providerData.isNotEmpty ?? false)
-                    ? user!.providerData.first.providerId
-                    : '-',
-              ),
               const Spacer(),
               SizedBox(
                 width: double.infinity,
@@ -52,7 +46,7 @@ class ProfileScreen extends StatelessWidget {
                   icon: const Icon(Icons.logout),
                   label: const Text('Logout'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.redAccent,
+                    backgroundColor: Colors.blueAccent,
                     foregroundColor: Colors.white,
                   ),
                   onPressed: () async {

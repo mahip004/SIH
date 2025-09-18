@@ -6,6 +6,8 @@ import 'firebase_options.dart'; // 🔹 Firebase options
 import 'providers/user_provider.dart';
 import 'screens/login_screen.dart';
 import 'screens/home_screen.dart'; // ✅ import the new Home Page
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

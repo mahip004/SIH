@@ -5,6 +5,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
 import '../helpers/location_helper.dart';
+import '../services/firestore_service.dart'; // 🔹 import Firestore service
 import 'home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -24,42 +25,35 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       UserCredential userCredential;
 
-      // --- GOOGLE SIGN-IN ---
       if (kIsWeb) {
+        // --- WEB LOGIN ---
         GoogleAuthProvider googleProvider = GoogleAuthProvider();
         try {
-          // try popup first (fast & common)
           userCredential =
-          await FirebaseAuth.instance.signInWithPopup(googleProvider);
+              await FirebaseAuth.instance.signInWithPopup(googleProvider);
         } catch (e) {
-          // Popup may be blocked due to COOP/COEP policies. Fallback to redirect.
           debugPrint('Popup failed, falling back to redirect: $e');
-          try {
-            await FirebaseAuth.instance.signInWithRedirect(googleProvider);
-            // After redirect the app reloads; try to obtain the result (may be null if redirect hasn't completed)
-            final result = await FirebaseAuth.instance.getRedirectResult();
-            if (result.user == null) {
-              // If still null, bail out gracefully; the redirect should complete the auth cycle.
-              setState(() => _isSigningIn = false);
-              return;
-            }
-            userCredential = result;
-          } catch (e2) {
-            debugPrint('Redirect sign-in also failed: $e2');
-            rethrow;
+          await FirebaseAuth.instance.signInWithRedirect(googleProvider);
+          final result = await FirebaseAuth.instance.getRedirectResult();
+          if (result.user == null) {
+            setState(() => _isSigningIn = false);
+            return;
           }
+          userCredential = result;
         }
       } else {
-        // mobile / non-web
-        final GoogleSignInAccount? googleUser =
-            await GoogleSignIn().signInSilently() ?? await GoogleSignIn().signIn();
+        // --- MOBILE LOGIN (Android/iOS/Emulator) ---
+        final GoogleSignIn googleSignIn = GoogleSignIn();
+        final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+
         if (googleUser == null) {
+          // user canceled sign-in
           setState(() => _isSigningIn = false);
           return;
         }
 
         final GoogleSignInAuthentication googleAuth =
-        await googleUser.authentication;
+            await googleUser.authentication;
 
         final credential = GoogleAuthProvider.credential(
           accessToken: googleAuth.accessToken,
@@ -67,12 +61,24 @@ class _LoginScreenState extends State<LoginScreen> {
         );
 
         userCredential =
-        await FirebaseAuth.instance.signInWithCredential(credential);
+            await FirebaseAuth.instance.signInWithCredential(credential);
       }
 
-      // --- SAVE USER ---
-      Provider.of<UserProvider>(context, listen: false)
-          .setUser(userCredential.user);
+      // --- SAVE USER IN PROVIDER ---
+      final user = userCredential.user;
+      Provider.of<UserProvider>(context, listen: false).setUser(user);
+
+      // --- SAVE USER TO FIRESTORE ---
+      if (user != null) {
+        await FirestoreService().saveUser(
+          user.uid,
+          user.displayName ?? "No Name",
+          user.email ?? "No Email",
+        );
+        debugPrint("✅ User data saved successfully for UID: ${user.uid}");
+      } else {
+        debugPrint("⚠️ User is null, nothing to save to Firestore.");
+      }
 
       // --- LOCATION PROMPT ---
       final savedLocation = await LocationHelper.getSavedLocation();
@@ -86,10 +92,8 @@ class _LoginScreenState extends State<LoginScreen> {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
             ),
-            title: const Text(
-              "📍 Share Location",
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
+            title: const Text("📍 Share Location",
+                style: TextStyle(fontWeight: FontWeight.bold)),
             content: const Text(
               "Do you wish to share your location? This will help auto-update rainfall and feasibility data.",
               style: TextStyle(fontSize: 15),
@@ -129,14 +133,15 @@ class _LoginScreenState extends State<LoginScreen> {
       if (latitude != null && longitude != null) {
         Provider.of<UserProvider>(context, listen: false)
             .setLocation(latitude, longitude);
-        // give provider a small moment to propagate (normally not needed, but avoids a possible race)
         await Future.delayed(const Duration(milliseconds: 150));
+        debugPrint("📍 User location saved: ($latitude, $longitude)");
       }
 
       // --- NAVIGATE TO HOME ---
-      // Router is driven by authStateChanges now; simply pop to root and let StreamBuilder decide
       if (mounted) {
-        Navigator.of(context).maybePop();
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const HomeScreen()),
+        );
       }
     } catch (e) {
       debugPrint('Error during Google Sign-In: $e');
@@ -178,8 +183,6 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Column(
             children: [
               const Spacer(flex: 1),
-
-              // Logo
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
@@ -200,7 +203,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
               const SizedBox(height: 24),
-
               const Text(
                 "Rainwater Hub",
                 style: TextStyle(
@@ -217,9 +219,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ],
                 ),
               ),
-
               const SizedBox(height: 16),
-
               Container(
                 margin: const EdgeInsets.symmetric(horizontal: 40),
                 child: const Text(
@@ -239,10 +239,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
               ),
-
               const Spacer(flex: 1),
-
-              // Main Content Area
               Expanded(
                 flex: 3,
                 child: Container(
@@ -258,8 +255,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Column(
                     children: [
                       const SizedBox(height: 20),
-
-                      // App Description
                       Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
@@ -280,7 +275,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                 Container(
                                   padding: const EdgeInsets.all(10),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFF1A73E8).withOpacity(0.1),
+                                    color: const Color(0xFF1A73E8)
+                                        .withOpacity(0.1),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: const Icon(
@@ -314,10 +310,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ],
                         ),
                       ),
-
                       const Spacer(),
-
-                      // Sign In Button
                       Container(
                         width: double.infinity,
                         height: 56,
@@ -346,32 +339,29 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           child: _isSigningIn
                               ? const CircularProgressIndicator(
-                            color: Color(0xFF1A73E8),
-                          )
+                                  color: Color(0xFF1A73E8),
+                                )
                               : Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Image.asset(
-                                'assets/google_logo.png',
-                                height: 24,
-                                width: 24,
-                              ),
-                              const SizedBox(width: 12),
-                              const Text(
-                                'Sign in with Google',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Image.asset(
+                                      'assets/google_logo.png',
+                                      height: 24,
+                                      width: 24,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    const Text(
+                                      'Sign in with Google',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ),
-                            ],
-                          ),
                         ),
                       ),
-
                       const SizedBox(height: 20),
-
-                      // Privacy Note
                       Text(
                         "By signing in, you agree to our Terms of Service and Privacy Policy",
                         textAlign: TextAlign.center,
@@ -380,7 +370,6 @@ class _LoginScreenState extends State<LoginScreen> {
                           color: Colors.grey[600],
                         ),
                       ),
-
                       const SizedBox(height: 20),
                     ],
                   ),
