@@ -142,8 +142,14 @@ class _ResultScreenState extends State<ResultScreen> {
     final baseLabel = selectedRecharge?.label ?? (recharge?['type'] ?? 'Recharge Structure');
     suggestedStructure = "$baseLabel ($suffixLabel)";
 
+    // ✅ Optimized Cost Estimation
+    final minCostPerLitre = 0.8; // ₹ per litre
+    final maxCostPerLitre = 1.2; // ₹ per litre
+    final minCost = tankCapacityLitres * minCostPerLitre;
+    final maxCost = tankCapacityLitres * maxCostPerLitre;
+
     costEstimation =
-    "Estimated cost: ₹${(tankCapacityLitres / 100).toStringAsFixed(0)} – ₹${(tankCapacityLitres / 80).toStringAsFixed(0)}\n"
+        "Estimated Cost: ₹${minCost.toStringAsFixed(0)} – ₹${maxCost.toStringAsFixed(0)}\n"
         "Benefit: Can store ~${(tankCapacityLitres / 1000).toStringAsFixed(1)} KL of water";
 
     // Location-based API call

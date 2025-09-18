@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "732492746255",
-    "project_id": "rwh-app-9e78f",
-    "storage_bucket": "rwh-app-9e78f.firebasestorage.app"
+    "project_number": "426294308064",
+    "project_id": "sih-rwh",
+    "storage_bucket": "sih-rwh.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:732492746255:android:64927423ca0be92aa35d7a",
+        "mobilesdk_app_id": "1:426294308064:android:de221f6e1cdf5463ec7485",
         "android_client_info": {
           "package_name": "com.example.rwh_app"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyD0d_xUzBc8mfi_GNW92Haa7XUGFw6IvH4"
+          "current_key": "AIzaSyCuy8bMPndx2i8M9d4PVYP6Yfq2DF26Hzk"
         }
       ],
       "services": {

@@ -11,6 +11,9 @@ dependencies:
   flutter:
     sdk: flutter
 
+  # Firebase Firestore
+  cloud_firestore: ^5.6.12   # or latest
+
   # Google Maps
   google_maps_flutter: ^2.7.0
 
