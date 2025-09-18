@@ -7,67 +7,59 @@ import '../providers/user_provider.dart';
 import '../helpers/location_helper.dart';
 import 'home_screen.dart';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
-  Future<void> _signInWithGoogle(BuildContext context) async {
-    try {
-      // Show loading indicator
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => Center(
-          child: Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const CircularProgressIndicator(
-                  color: Color(0xFF1A73E8),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  "Signing in...",
-                  style: TextStyle(
-                    color: Colors.grey[800],
-                    fontSize: 16,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
 
+class _LoginScreenState extends State<LoginScreen> {
+  bool _isSigningIn = false;
+
+  Future<void> _signInWithGoogle(BuildContext context) async {
+    if (_isSigningIn) return; // prevent multiple clicks
+    setState(() => _isSigningIn = true);
+
+    try {
       UserCredential userCredential;
 
       // --- GOOGLE SIGN-IN ---
       if (kIsWeb) {
         GoogleAuthProvider googleProvider = GoogleAuthProvider();
-        userCredential =
-            await FirebaseAuth.instance.signInWithPopup(googleProvider);
+        try {
+          // try popup first (fast & common)
+          userCredential =
+          await FirebaseAuth.instance.signInWithPopup(googleProvider);
+        } catch (e) {
+          // Popup may be blocked due to COOP/COEP policies. Fallback to redirect.
+          debugPrint('Popup failed, falling back to redirect: $e');
+          try {
+            await FirebaseAuth.instance.signInWithRedirect(googleProvider);
+            // After redirect the app reloads; try to obtain the result (may be null if redirect hasn't completed)
+            final result = await FirebaseAuth.instance.getRedirectResult();
+            if (result.user == null) {
+              // If still null, bail out gracefully; the redirect should complete the auth cycle.
+              setState(() => _isSigningIn = false);
+              return;
+            }
+            userCredential = result;
+          } catch (e2) {
+            debugPrint('Redirect sign-in also failed: $e2');
+            rethrow;
+          }
+        }
       } else {
-        final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
-
-        // Close loading dialog if user cancels
+        // mobile / non-web
+        final GoogleSignInAccount? googleUser =
+            await GoogleSignIn().signInSilently() ?? await GoogleSignIn().signIn();
         if (googleUser == null) {
-          Navigator.of(context).pop();
+          setState(() => _isSigningIn = false);
           return;
         }
 
         final GoogleSignInAuthentication googleAuth =
-            await googleUser.authentication;
+        await googleUser.authentication;
 
         final credential = GoogleAuthProvider.credential(
           accessToken: googleAuth.accessToken,
@@ -75,11 +67,8 @@ class LoginScreen extends StatelessWidget {
         );
 
         userCredential =
-            await FirebaseAuth.instance.signInWithCredential(credential);
+        await FirebaseAuth.instance.signInWithCredential(credential);
       }
-
-      // Close loading dialog
-      Navigator.of(context).pop();
 
       // --- SAVE USER ---
       Provider.of<UserProvider>(context, listen: false)
@@ -98,11 +87,8 @@ class LoginScreen extends StatelessWidget {
               borderRadius: BorderRadius.circular(16),
             ),
             title: const Text(
-              "Share Location",
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF1A73E8),
-              ),
+              "📍 Share Location",
+              style: TextStyle(fontWeight: FontWeight.bold),
             ),
             content: const Text(
               "Do you wish to share your location? This will help auto-update rainfall and feasibility data.",
@@ -111,13 +97,7 @@ class LoginScreen extends StatelessWidget {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
-                child: Text(
-                  "No",
-                  style: TextStyle(
-                    color: Colors.grey[700],
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                child: const Text("No"),
               ),
               ElevatedButton(
                 onPressed: () => Navigator.pop(context, true),
@@ -127,55 +107,14 @@ class LoginScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text(
-                  "Yes",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                child: const Text("Yes", style: TextStyle(color: Colors.white)),
               ),
             ],
           ),
         );
 
         if (shareLocation == true) {
-          // Show loading indicator for location
-          showDialog(
-            context: context,
-            barrierDismissible: false,
-            builder: (context) => Center(
-              child: Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const CircularProgressIndicator(
-                      color: Color(0xFF1A73E8),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      "Getting location...",
-                      style: TextStyle(
-                        color: Colors.grey[800],
-                        fontSize: 16,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
-
           final loc = await LocationHelper.askLocationPermissionAndFetch();
-
-          // Close loading dialog
-          Navigator.of(context).pop();
-
           if (loc != null) {
             latitude = loc.latitude;
             longitude = loc.longitude;
@@ -190,27 +129,47 @@ class LoginScreen extends StatelessWidget {
       if (latitude != null && longitude != null) {
         Provider.of<UserProvider>(context, listen: false)
             .setLocation(latitude, longitude);
+        // give provider a small moment to propagate (normally not needed, but avoids a possible race)
+        await Future.delayed(const Duration(milliseconds: 150));
       }
 
       // --- NAVIGATE TO HOME ---
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
-      );
-    } catch (e) {
-      // Close loading dialog if there's an error
-      Navigator.of(context).pop();
+      if (mounted) {
+        Navigator.of(context).pushReplacement(
+          PageRouteBuilder(
+            pageBuilder: (_, __, ___) => const HomeScreen(),
+            transitionsBuilder: (_, animation, __, child) {
+              const begin = Offset(0.0, 1.0);
+              const end = Offset.zero;
+              const curve = Curves.easeOutCubic;
 
-      debugPrint('Error during Google Sign-In: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Sign-In Failed: $e'),
-          backgroundColor: Colors.red[400],
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
+              var tween = Tween(begin: begin, end: end)
+                  .chain(CurveTween(curve: curve));
+
+              return SlideTransition(
+                position: animation.drive(tween),
+                child: child,
+              );
+            },
           ),
-        ),
-      );
+        );
+      }
+    } catch (e) {
+      debugPrint('Error during Google Sign-In: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Sign-In Failed: $e'),
+            backgroundColor: Colors.red[400],
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSigningIn = false);
     }
   }
 
@@ -236,7 +195,7 @@ class LoginScreen extends StatelessWidget {
             children: [
               const Spacer(flex: 1),
 
-              // Logo and App Name
+              // Logo
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
@@ -326,14 +285,9 @@ class LoginScreen extends StatelessWidget {
                             BoxShadow(
                               color: Colors.black.withOpacity(0.05),
                               blurRadius: 10,
-                              spreadRadius: 0,
                               offset: const Offset(0, 4),
                             ),
                           ],
-                          border: Border.all(
-                            color: const Color(0xFF1A73E8).withOpacity(0.1),
-                            width: 1,
-                          ),
                         ),
                         child: Column(
                           children: [
@@ -398,7 +352,6 @@ class LoginScreen extends StatelessWidget {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.white,
                             foregroundColor: Colors.black87,
-                            elevation: 0,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
                               side: BorderSide(
@@ -406,9 +359,12 @@ class LoginScreen extends StatelessWidget {
                                 width: 1,
                               ),
                             ),
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
                           ),
-                          child: Row(
+                          child: _isSigningIn
+                              ? const CircularProgressIndicator(
+                            color: Color(0xFF1A73E8),
+                          )
+                              : Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Image.asset(

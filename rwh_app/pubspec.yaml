@@ -22,6 +22,8 @@ dependencies:
   # For fetching local weather/rainfall data via API
   http: ^1.2.2
 
+  intl: ^0.18.0
+
   # For better state management
   provider: ^6.1.2
 
@@ -49,4 +51,3 @@ flutter:
     - assets/recharge_sketch.png
     - assets/harvesting.jpg
     - assets/soil_data.json
-

@@ -63,13 +63,7 @@ class MyApp extends StatelessWidget {
             ),
           ),
         ),
-        home: Consumer<UserProvider>(
-          builder: (context, userProvider, _) {
-            return userProvider.user == null
-                ? const LoginScreen()
-                : const HomeScreen(); // ✅ Redirect to HomePage
-          },
-        ),
+       home: const HomeScreen(),
       ),
     );
   }

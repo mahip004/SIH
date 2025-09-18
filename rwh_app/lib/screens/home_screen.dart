@@ -1,71 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'feasibility_form.dart';
 import 'trends_screen.dart';
 import 'past_reports_screen.dart';
-import 'login_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
-
-  // --- Show logout confirmation ---
-  void _confirmLogout(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Logout',
-          style: TextStyle(fontWeight: FontWeight.bold)),
-        content: const Text('Are you sure you want to log out?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(), // Cancel
-            child: Text('Cancel',
-              style: TextStyle(color: Colors.grey[700])),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.of(context).pop(); // Close dialog
-              await _logout(context);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF2A93D5),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: const Text('Logout'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // --- Perform logout ---
-  Future<void> _logout(BuildContext context) async {
-    try {
-      await FirebaseAuth.instance.signOut();
-      await GoogleSignIn().signOut();
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
-            (route) => false,
-      );
-    } catch (e) {
-      debugPrint("Logout failed: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Logout failed: $e"),
-          backgroundColor: Colors.red[400],
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-        ),
-      );
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -85,7 +25,7 @@ class HomeScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Custom App Bar
+              // Custom App Bar (removed logout)
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                 decoration: BoxDecoration(
@@ -103,26 +43,16 @@ class HomeScreen extends StatelessWidget {
                   ],
                 ),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      children: [
-                        Icon(Icons.water_drop, color: Colors.white, size: 24),
-                        SizedBox(width: 10),
-                        Text(
-                          "Rainwater Hub",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.logout_rounded, color: Colors.white),
-                      tooltip: 'Logout',
-                      onPressed: () => _confirmLogout(context),
+                    const Icon(Icons.water_drop, color: Colors.white, size: 24),
+                    const SizedBox(width: 10),
+                    const Text(
+                      "Rainwater Hub",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ],
                 ),
@@ -132,7 +62,7 @@ class HomeScreen extends StatelessWidget {
                 child: ListView(
                   padding: const EdgeInsets.all(20),
                   children: [
-                    // Welcome message with subtle decoration
+                    // Welcome message
                     Container(
                       margin: const EdgeInsets.only(bottom: 24, top: 10),
                       child: Row(
@@ -141,16 +71,16 @@ class HomeScreen extends StatelessWidget {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  "Welcome Back 👋",
+                                const Text(
+                                  "Welcome 👋",
                                   style: TextStyle(
                                     fontSize: 26,
                                     fontWeight: FontWeight.bold,
-                                    color: const Color(0xFF1A73E8),
+                                    color: Color(0xFF1A73E8),
                                     letterSpacing: 0.5,
                                   ),
                                 ),
-                                SizedBox(height: 6),
+                                const SizedBox(height: 6),
                                 Text(
                                   "Track and manage your rainwater harvesting",
                                   style: TextStyle(
@@ -163,12 +93,12 @@ class HomeScreen extends StatelessWidget {
                             ),
                           ),
                           Container(
-                            padding: EdgeInsets.all(12),
+                            padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: Color(0xFF1A73E8).withOpacity(0.1),
+                              color: const Color(0xFF1A73E8).withOpacity(0.1),
                               borderRadius: BorderRadius.circular(16),
                             ),
-                            child: Icon(
+                            child: const Icon(
                               Icons.cloud,
                               color: Color(0xFF1A73E8),
                               size: 32,
@@ -184,7 +114,7 @@ class HomeScreen extends StatelessWidget {
                       icon: FontAwesomeIcons.chartLine,
                       title: "Water Insights",
                       subtitle: "See recent trends and rainfall updates",
-                      gradientColors: [Color(0xFF2A93D5), Color(0xFF3FA2F7)],
+                      gradientColors: const [Color(0xFF2A93D5), Color(0xFF3FA2F7)],
                       onTap: () {
                         Navigator.push(
                           context,
@@ -199,7 +129,7 @@ class HomeScreen extends StatelessWidget {
                       icon: FontAwesomeIcons.droplet,
                       title: "Check Feasibility",
                       subtitle: "Evaluate rooftop rainwater harvesting potential",
-                      gradientColors: [Color(0xFF26A69A), Color(0xFF4DB6AC)],
+                      gradientColors: const [Color(0xFF26A69A), Color(0xFF4DB6AC)],
                       onTap: () {
                         Navigator.push(
                           context,
@@ -214,7 +144,7 @@ class HomeScreen extends StatelessWidget {
                       icon: FontAwesomeIcons.clockRotateLeft,
                       title: "Past Reports",
                       subtitle: "View your previous feasibility results",
-                      gradientColors: [Color(0xFF5C6BC0), Color(0xFF7986CB)],
+                      gradientColors: const [Color(0xFF5C6BC0), Color(0xFF7986CB)],
                       onTap: () {
                         Navigator.push(
                           context,
@@ -225,8 +155,8 @@ class HomeScreen extends StatelessWidget {
 
                     // Water facts card
                     Container(
-                      margin: EdgeInsets.only(top: 20),
-                      padding: EdgeInsets.all(16),
+                      margin: const EdgeInsets.only(top: 20),
+                      padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(16),
@@ -234,18 +164,18 @@ class HomeScreen extends StatelessWidget {
                           BoxShadow(
                             color: Colors.black.withOpacity(0.05),
                             blurRadius: 10,
-                            offset: Offset(0, 4),
+                            offset: const Offset(0, 4),
                           ),
                         ],
                         border: Border.all(
-                          color: Color(0xFF1A73E8).withOpacity(0.1),
+                          color: const Color(0xFF1A73E8).withOpacity(0.1),
                           width: 1,
                         ),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
+                          const Text(
                             "Water Saving Tip",
                             style: TextStyle(
                               fontSize: 16,
@@ -253,7 +183,7 @@ class HomeScreen extends StatelessWidget {
                               color: Color(0xFF1A73E8),
                             ),
                           ),
-                          SizedBox(height: 8),
+                          const SizedBox(height: 8),
                           Text(
                             "Harvesting rainwater from a 1,000 sq ft roof can save up to 600 gallons of water during a 1-inch rainfall.",
                             style: TextStyle(
@@ -274,7 +204,7 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  // --- Enhanced Home Cards ---
+  // --- Home Cards ---
   Widget _buildHomeCard(
       BuildContext context, {
         required IconData icon,
