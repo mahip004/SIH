@@ -51,3 +51,4 @@ flutter:
     - assets/recharge_sketch.png
     - assets/harvesting.jpg
     - assets/soil_data.json
+    - assets/recharge_structures.json

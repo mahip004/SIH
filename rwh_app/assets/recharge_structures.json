@@ -1,0 +1,23 @@
+[
+  {
+    "id": "pit",
+    "label": "Recharge Pit",
+    "maxRoofArea": 100,
+    "dimensions": "2m × 2m × 3m (Boulders, Gravel, Sand)",
+    "image": "https://i0.wp.com/www.wakeupkins.com/wp-content/uploads/2019/10/rwh-img1.png?fit=900%2C616&ssl=1"
+  },
+  {
+    "id": "trench",
+    "label": "Recharge Trench",
+    "maxRoofArea": 300,
+    "dimensions": "1m × 1.5m × 15m (Boulders, Gravel, Sand)",
+    "image": "https://www.researchgate.net/publication/337534514/figure/fig53/AS:830474817650688@1575012034000/Schema-c-diagram-of-recharging-Trenches-viii-Percolation-Tank-Percolation-tanks-are.png"
+  },
+  {
+    "id": "shaft",
+    "label": "Recharge Shaft",
+    "maxRoofArea": null,
+    "dimensions": "1m × 5m (Deep Aquifer)",
+    "image": "https://www.researchgate.net/publication/313314094/figure/fig2/AS:457929250873345@1486190249569/The-conceptual-design-of-the-recharge-shaft-not-to-scale.png"
+  }
+]

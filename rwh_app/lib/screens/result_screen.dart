@@ -8,6 +8,7 @@ import 'rainfall_data.dart';
 import 'rainfall_intensity_data.dart';
 import 'pipe_diameter_data.dart';
 import '../helpers/location_helper.dart';
+import '../helpers/recharge_helper.dart';
 import '../models/report_model.dart';
 import '../services/report_storage_service.dart';
 
@@ -32,6 +33,8 @@ class _ResultScreenState extends State<ResultScreen> {
   late RWHStructure rwh;
   bool isFetchingPipe = false;
   bool isSavingReport = false;
+  RechargeConfig? selectedRecharge;
+  String? structureImagePath;
 
   @override
   void initState() {
@@ -99,7 +102,20 @@ class _ResultScreenState extends State<ResultScreen> {
     );
 
     storageDim = rwh.storageDimensions;
-    recharge = rwh.rechargeStructure;
+
+    // Select recharge structure dynamically from JSON config based on roof area
+    selectedRecharge = await RechargeHelper.selectByRoofArea(roofArea);
+    if (selectedRecharge != null) {
+      recharge = {
+        'type': selectedRecharge!.label,
+        'dimensions': selectedRecharge!.dimensions,
+        'image': selectedRecharge!.image,
+      };
+      structureImagePath = selectedRecharge!.image;
+    } else {
+      recharge = rwh.rechargeStructure; // fallback to static logic
+      structureImagePath = 'assets/recharge_sketch.png';
+    }
 
     // Calculate water availability
     if (roofType == "flat") {
@@ -115,13 +131,16 @@ class _ResultScreenState extends State<ResultScreen> {
     }
 
     // Suggested structure
+    String suffixLabel;
     if (waterAvailable >= tankCapacityLitres) {
-      suggestedStructure = "Recharge Pit (enough collection)";
+      suffixLabel = "enough collection";
     } else if (waterAvailable >= tankCapacityLitres / 2) {
-      suggestedStructure = "Recharge Trench (moderate collection)";
+      suffixLabel = "moderate collection";
     } else {
-      suggestedStructure = "Recharge Shaft (low collection)";
+      suffixLabel = "low collection";
     }
+    final baseLabel = selectedRecharge?.label ?? (recharge?['type'] ?? 'Recharge Structure');
+    suggestedStructure = "$baseLabel ($suffixLabel)";
 
     costEstimation =
     "Estimated cost: ₹${(tankCapacityLitres / 100).toStringAsFixed(0)} – ₹${(tankCapacityLitres / 80).toStringAsFixed(0)}\n"
@@ -488,8 +507,8 @@ class _ResultScreenState extends State<ResultScreen> {
                       _buildInsightCard(
                         icon: FontAwesomeIcons.draftingCompass,
                         title: "Sketch of Structure",
-                        value: "Proposed trench/recharge structure",
-                        imagePath: "assets/recharge_sketch.png",
+                        value: selectedRecharge?.label ?? (recharge?['type'] ?? 'Proposed recharge structure'),
+                        imagePath: (recharge != null ? (recharge!['image'] as String?) : null) ?? structureImagePath ?? "assets/recharge_sketch.png",
                         gradientColors: const [
                           Color(0xFF5C6BC0),
                           Color(0xFF7986CB)
@@ -683,10 +702,19 @@ class _ResultScreenState extends State<ResultScreen> {
                       ),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(12),
-                        child: Image.asset(
-                          imagePath,
-                          fit: BoxFit.cover,
-                        ),
+                        child: imagePath.startsWith('http')
+                            ? Image.network(
+                                imagePath,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) => Image.asset(
+                                  'assets/recharge_sketch.png',
+                                  fit: BoxFit.cover,
+                                ),
+                              )
+                            : Image.asset(
+                                imagePath,
+                                fit: BoxFit.cover,
+                              ),
                       ),
                     ),
                   ],

@@ -162,6 +162,7 @@ class SavedReportDetailScreen extends StatelessWidget {
                         value: "${report.suggestedStructure}\n"
                             "Recommended Dimensions: ${report.rechargeStructure?['dimensions'] ?? 'N/A'}\n"
                             "Estimated Runoff Available: ${report.waterAvailable.toStringAsFixed(0)} L/year",
+                        imagePath: report.rechargeStructure?['image'],
                         gradientColors: const [
                           Color(0xFF26A69A),
                           Color(0xFF4DB6AC)
@@ -324,10 +325,19 @@ class SavedReportDetailScreen extends StatelessWidget {
                       ),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(12),
-                        child: Image.asset(
-                          imagePath,
-                          fit: BoxFit.cover,
-                        ),
+                        child: imagePath.startsWith('http')
+                            ? Image.network(
+                                imagePath,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) => Image.asset(
+                                  'assets/recharge_sketch.png',
+                                  fit: BoxFit.cover,
+                                ),
+                              )
+                            : Image.asset(
+                                imagePath,
+                                fit: BoxFit.cover,
+                              ),
                       ),
                     ),
                   ],
