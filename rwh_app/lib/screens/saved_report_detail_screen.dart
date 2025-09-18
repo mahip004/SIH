@@ -5,10 +5,7 @@ import '../models/report_model.dart';
 class SavedReportDetailScreen extends StatelessWidget {
   final ReportModel report;
 
-  const SavedReportDetailScreen({
-    super.key,
-    required this.report,
-  });
+  const SavedReportDetailScreen({super.key, required this.report});
 
   @override
   Widget build(BuildContext context) {
@@ -48,11 +45,7 @@ class SavedReportDetailScreen extends StatelessWidget {
                   children: [
                     GestureDetector(
                       onTap: () => Navigator.pop(context),
-                      child: const Icon(
-                        Icons.arrow_back_ios,
-                        color: Colors.white,
-                        size: 20,
-                      ),
+                      child: const Icon(Icons.arrow_back_ios, color: Colors.white, size: 20),
                     ),
                     const SizedBox(width: 16),
                     const Text(
@@ -70,11 +63,7 @@ class SavedReportDetailScreen extends StatelessWidget {
                         color: Colors.white.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Icon(
-                        Icons.description,
-                        color: Colors.white,
-                        size: 20,
-                      ),
+                      child: const Icon(Icons.description, color: Colors.white, size: 20),
                     ),
                   ],
                 ),
@@ -105,11 +94,7 @@ class SavedReportDetailScreen extends StatelessWidget {
                                 const SizedBox(height: 6),
                                 Text(
                                   "Generated on ${report.formattedDate}",
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey[700],
-                                    height: 1.3,
-                                  ),
+                                  style: TextStyle(fontSize: 14, color: Colors.grey[700], height: 1.3),
                                 ),
                               ],
                             ),
@@ -120,17 +105,12 @@ class SavedReportDetailScreen extends StatelessWidget {
                               color: const Color(0xFF1A73E8).withOpacity(0.1),
                               borderRadius: BorderRadius.circular(16),
                             ),
-                            child: const Icon(
-                              Icons.insights,
-                              color: Color(0xFF1A73E8),
-                              size: 28,
-                            ),
+                            child: const Icon(Icons.insights, color: Color(0xFF1A73E8), size: 28),
                           ),
                         ],
                       ),
                       const SizedBox(height: 24),
 
-                      // Basic Information
                       _buildInsightCard(
                         icon: FontAwesomeIcons.home,
                         title: "Property Details",
@@ -144,7 +124,6 @@ class SavedReportDetailScreen extends StatelessWidget {
                         gradientColors: const [Color(0xFF1A73E8), Color(0xFF2A93D5)],
                       ),
 
-                      // Storage Tank
                       _buildInsightCard(
                         icon: FontAwesomeIcons.database,
                         title: "Storage Tank",
@@ -155,7 +134,6 @@ class SavedReportDetailScreen extends StatelessWidget {
                         gradientColors: const [Color(0xFF1A73E8), Color(0xFF2A93D5)],
                       ),
 
-                      // Recharge Structure
                       _buildInsightCard(
                         icon: FontAwesomeIcons.seedling,
                         title: "Recharge Structure",
@@ -163,32 +141,22 @@ class SavedReportDetailScreen extends StatelessWidget {
                             "Recommended Dimensions: ${report.rechargeStructure?['dimensions'] ?? 'N/A'}\n"
                             "Estimated Runoff Available: ${report.waterAvailable.toStringAsFixed(0)} L/year",
                         imagePath: report.rechargeStructure?['image'],
-                        gradientColors: const [
-                          Color(0xFF26A69A),
-                          Color(0xFF4DB6AC)
-                        ],
+                        gradientColors: const [Color(0xFF26A69A), Color(0xFF4DB6AC)],
+                        enableFullScreenImage: true,
                       ),
 
-                      // Water Availability
                       _buildInsightCard(
                         icon: FontAwesomeIcons.water,
                         title: "Runoff Generation Capacity",
-                        value: "${report.waterAvailable.toStringAsFixed(0)} litres/year (with runoff coefficient ${report.runoffCoefficient})",
-                        gradientColors: const [
-                          Color(0xFF5C6BC0),
-                          Color(0xFF7986CB)
-                        ],
+                        value: "${report.waterAvailable.toStringAsFixed(0)} litres/year (runoff coefficient ${report.runoffCoefficient})",
+                        gradientColors: const [Color(0xFF5C6BC0), Color(0xFF7986CB)],
                       ),
 
-                      // Cost Estimation
                       _buildInsightCard(
                         icon: FontAwesomeIcons.coins,
                         title: "Cost Estimation & Benefit",
                         value: report.costEstimation,
-                        gradientColors: const [
-                          Color(0xFFFF9800),
-                          Color(0xFFFFB74D)
-                        ],
+                        gradientColors: const [Color(0xFFFF9800), Color(0xFFFFB74D)],
                       ),
 
                       const SizedBox(height: 30),
@@ -238,18 +206,13 @@ class SavedReportDetailScreen extends StatelessWidget {
     required String value,
     String? imagePath,
     required List<Color> gradientColors,
+    bool enableFullScreenImage = false,
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: gradientColors[0].withOpacity(0.15),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        boxShadow: [BoxShadow(color: gradientColors[0].withOpacity(0.15), blurRadius: 10, offset: const Offset(0, 4))],
       ),
       child: Material(
         color: Colors.transparent,
@@ -260,7 +223,33 @@ class SavedReportDetailScreen extends StatelessWidget {
           ),
           child: InkWell(
             borderRadius: BorderRadius.circular(16),
-            onTap: () {},
+            onTap: imagePath != null && enableFullScreenImage
+                ? () {
+                    showDialog(
+                      context: navigatorKey.currentContext!,
+                      builder: (_) => Dialog(
+                        insetPadding: const EdgeInsets.all(12),
+                        child: Stack(
+                          children: [
+                            InteractiveViewer(
+                              child: imagePath.startsWith('http')
+                                  ? Image.network(imagePath, fit: BoxFit.contain)
+                                  : Image.asset(imagePath, fit: BoxFit.contain),
+                            ),
+                            Positioned(
+                              top: 8,
+                              right: 8,
+                              child: IconButton(
+                                icon: const Icon(Icons.close, size: 28, color: Colors.white),
+                                onPressed: () => Navigator.of(navigatorKey.currentContext!).pop(),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+                : null,
             child: Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
@@ -272,11 +261,7 @@ class SavedReportDetailScreen extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: gradientColors,
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
+                          gradient: LinearGradient(colors: gradientColors, begin: Alignment.topLeft, end: Alignment.bottomRight),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Icon(icon, size: 24, color: Colors.white),
@@ -286,23 +271,9 @@ class SavedReportDetailScreen extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              title,
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF2D3748),
-                              ),
-                            ),
+                            Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF2D3748))),
                             const SizedBox(height: 8),
-                            Text(
-                              value,
-                              style: TextStyle(
-                                fontSize: 15,
-                                color: Colors.grey[800],
-                                height: 1.5,
-                              ),
-                            ),
+                            Text(value, style: TextStyle(fontSize: 15, color: Colors.grey[800], height: 1.5)),
                           ],
                         ),
                       ),
@@ -310,35 +281,11 @@ class SavedReportDetailScreen extends StatelessWidget {
                   ),
                   if (imagePath != null) ...[
                     const SizedBox(height: 16),
-                    Container(
-                      width: double.infinity,
-                      height: 180,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: imagePath.startsWith('http')
-                            ? Image.network(
-                                imagePath,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) => Image.asset(
-                                  'assets/recharge_sketch.png',
-                                  fit: BoxFit.cover,
-                                ),
-                              )
-                            : Image.asset(
-                                imagePath,
-                                fit: BoxFit.cover,
-                              ),
-                      ),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: imagePath.startsWith('http')
+                          ? Image.network(imagePath, fit: BoxFit.cover)
+                          : Image.asset(imagePath, fit: BoxFit.cover),
                     ),
                   ],
                 ],
@@ -350,3 +297,6 @@ class SavedReportDetailScreen extends StatelessWidget {
     );
   }
 }
+
+// Make sure you have a global navigator key in your main.dart
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
