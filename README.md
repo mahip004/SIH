@@ -31,9 +31,6 @@ Our application provides:
 
 ---
 
-
----
-
 ## ⚙️ Installation & Setup  
 
 Follow these steps to run the app locally:  
