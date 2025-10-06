@@ -44,7 +44,7 @@ class UsersInDistrictScreen extends StatelessWidget {
                 return const Center(child: CircularProgressIndicator());
               }
               final users = usersSnapshot.data!;
-              return Padding(
+              return SingleChildScrollView(
                 padding: const EdgeInsets.all(24.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -68,43 +68,43 @@ class UsersInDistrictScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 24),
-                    Expanded(
-                      child: users.isEmpty
-                          ? Center(
-                              child: Text(
-                                "Be the first to start rainwater harvesting in your district!",
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.grey[700],
-                                ),
-                                textAlign: TextAlign.center,
+                    users.isEmpty
+                        ? Center(
+                            child: Text(
+                              "Be the first to start rainwater harvesting in your district!",
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.grey[700],
                               ),
-                            )
-                          : ListView.builder(
-                              itemCount: users.length,
-                              itemBuilder: (context, idx) {
-                                final u = users[idx];
-                                return Card(
-                                  elevation: 2,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  margin: const EdgeInsets.symmetric(vertical: 8),
-                                  child: ListTile(
-                                    leading: CircleAvatar(
-                                      backgroundColor: const Color(0xFF185A9D),
-                                      child: Text(
-                                        (u['name'] ?? 'U')[0].toUpperCase(),
-                                        style: const TextStyle(color: Colors.white),
-                                      ),
-                                    ),
-                                    title: Text(u['name'] ?? 'Unknown'),
-                                    subtitle: Text(u['email'] ?? ''),
-                                  ),
-                                );
-                              },
+                              textAlign: TextAlign.center,
                             ),
-                    ),
+                          )
+                        : ListView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: users.length,
+                            itemBuilder: (context, idx) {
+                              final u = users[idx];
+                              return Card(
+                                elevation: 2,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                margin: const EdgeInsets.symmetric(vertical: 8),
+                                child: ListTile(
+                                  leading: CircleAvatar(
+                                    backgroundColor: const Color(0xFF185A9D),
+                                    child: Text(
+                                      (u['name'] ?? 'U')[0].toUpperCase(),
+                                      style: const TextStyle(color: Colors.white),
+                                    ),
+                                  ),
+                                  title: Text(u['name'] ?? 'Unknown'),
+                                  subtitle: Text(u['email'] ?? ''),
+                                ),
+                              );
+                            },
+                          ),
                     const SizedBox(height: 16),
                     Container(
                       padding: const EdgeInsets.all(16),

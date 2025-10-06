@@ -15,8 +15,32 @@ class LoginScreen extends StatefulWidget {
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStateMixin {
   bool _isSigningIn = false;
+
+  late AnimationController _animationController;
+  late Animation<Color?> _backgroundGradientAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 8),
+    )..repeat(reverse: true);
+
+    _backgroundGradientAnimation = ColorTween(
+      begin: const Color(0xFF1A73E8),
+      end: const Color(0xFF2A93D5),
+    ).animate(_animationController);
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
 
   Future<void> _signInWithGoogle(BuildContext context) async {
     if (_isSigningIn) return; // prevent multiple clicks
@@ -165,6 +189,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final Color animatedColor =
+        _backgroundGradientAnimation.value ?? const Color(0xFF1A73E8);
+
     return Scaffold(
       body: Container(
         width: double.infinity,
@@ -173,77 +200,76 @@ class _LoginScreenState extends State<LoginScreen> {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              const Color(0xFF1A73E8).withOpacity(0.8),
-              const Color(0xFF2A93D5).withOpacity(0.7),
+              animatedColor.withOpacity(0.8),
+              animatedColor.withOpacity(0.7),
               Colors.white,
             ],
             stops: const [0.0, 0.4, 1.0],
           ),
         ),
         child: SafeArea(
-          child: Column(
-            children: [
-              const Spacer(flex: 1),
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.9),
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF1A73E8).withOpacity(0.3),
-                      blurRadius: 20,
-                      spreadRadius: 5,
-                    ),
-                  ],
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                const SizedBox(height: 40), // <-- Replace Spacer with SizedBox
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.9),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: animatedColor.withOpacity(0.3),
+                        blurRadius: 20,
+                        spreadRadius: 5,
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    Icons.water_drop,
+                    size: 60,
+                    color: animatedColor,
+                  ),
                 ),
-                child: const Icon(
-                  Icons.water_drop,
-                  size: 60,
-                  color: Color(0xFF1A73E8),
-                ),
-              ),
-              const SizedBox(height: 24),
-              const Text(
-                "Rainwater Hub",
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                  letterSpacing: 1,
-                  shadows: [
-                    Shadow(
-                      color: Colors.black26,
-                      offset: Offset(0, 2),
-                      blurRadius: 4,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 40),
-                child: const Text(
-                  "Your complete solution for rainwater harvesting and groundwater conservation",
-                  textAlign: TextAlign.center,
+                const SizedBox(height: 24),
+                Text(
+                  "Rainwater Hub",
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
                     color: Colors.white,
-                    height: 1.4,
-                    shadows: [
+                    letterSpacing: 1,
+                    shadows: const [
                       Shadow(
                         color: Colors.black26,
-                        offset: Offset(0, 1),
-                        blurRadius: 2,
+                        offset: Offset(0, 2),
+                        blurRadius: 4,
                       ),
                     ],
                   ),
                 ),
-              ),
-              const Spacer(flex: 1),
-              Expanded(
-                flex: 3,
-                child: Container(
+                const SizedBox(height: 16),
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 40),
+                  child: Text(
+                    "Your complete solution for rainwater harvesting and groundwater conservation",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.white,
+                      height: 1.4,
+                      shadows: const [
+                        Shadow(
+                          color: Colors.black26,
+                          offset: Offset(0, 1),
+                          blurRadius: 2,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 40), // <-- Replace Spacer with SizedBox
+                Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(30),
                   decoration: const BoxDecoration(
@@ -276,24 +302,23 @@ class _LoginScreenState extends State<LoginScreen> {
                                 Container(
                                   padding: const EdgeInsets.all(10),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFF1A73E8)
-                                        .withOpacity(0.1),
+                                    color: animatedColor.withOpacity(0.1),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: const Icon(
+                                  child: Icon(
                                     Icons.eco_outlined,
-                                    color: Color(0xFF1A73E8),
+                                    color: animatedColor,
                                     size: 24,
                                   ),
                                 ),
                                 const SizedBox(width: 12),
-                                const Expanded(
+                                Expanded(
                                   child: Text(
                                     "Sustainable Water Solutions",
                                     style: TextStyle(
                                       fontSize: 18,
                                       fontWeight: FontWeight.bold,
-                                      color: Color(0xFF1A73E8),
+                                      color: animatedColor,
                                     ),
                                   ),
                                 ),
@@ -311,7 +336,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ],
                         ),
                       ),
-                      const Spacer(),
+                      const SizedBox(height: 20),
                       Container(
                         width: double.infinity,
                         height: 56,
@@ -319,7 +344,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFF1A73E8).withOpacity(0.2),
+                              color: animatedColor.withOpacity(0.2),
                               blurRadius: 10,
                               offset: const Offset(0, 4),
                             ),
@@ -339,8 +364,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
                           child: _isSigningIn
-                              ? const CircularProgressIndicator(
-                                  color: Color(0xFF1A73E8),
+                              ? CircularProgressIndicator(
+                                  color: animatedColor,
                                 )
                               : Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
@@ -375,8 +400,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     ],
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
