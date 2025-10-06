@@ -1,10 +1,9 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
 import '../services/auth_service.dart';
-import '../services/firestore_service.dart'; // <-- Add this import
+import '../services/firestore_service.dart';
 import 'login_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -14,15 +13,44 @@ class ProfileScreen extends StatefulWidget {
   State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen> {
+class _ProfileScreenState extends State<ProfileScreen>
+    with SingleTickerProviderStateMixin {
   final TextEditingController _districtController = TextEditingController();
   String? _initialDistrict;
   bool _isSaving = false;
 
+
+
   @override
   void initState() {
     super.initState();
-    _loadDistrict();
+    _loadDistrict(); // ✅ load district properly
+
+    // ✅ Initialize AnimationController safely
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 6),
+    )..repeat(reverse: true);
+
+    // ✅ Initialize ColorTween animation
+    _headerColorAnimation = ColorTween(
+      begin: const Color(0xFF1A73E8),
+      end: const Color(0xFF42A5F5),
+    ).animate(_animationController!);
+
+    _animationController!.addListener(() {
+      if (mounted) setState(() {});
+    });
+  }
+
+   AnimationController? _animationController;
+    Animation<Color?>? _headerColorAnimation;
+
+  @override
+  void dispose() {
+    _animationController?.dispose(); // ✅ null-safe
+    _districtController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadDistrict() async {
@@ -30,10 +58,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (user != null) {
       final doc = await FirestoreService().getUser(user.uid);
       final data = doc.data();
-      setState(() {
-        _initialDistrict = data?['district'] ?? '';
-        _districtController.text = _initialDistrict ?? '';
-      });
+      if (mounted) {
+        setState(() {
+          _initialDistrict = data?['district'] ?? '';
+          _districtController.text = _initialDistrict ?? '';
+        });
+      }
     }
   }
 
@@ -60,11 +90,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final user = context.watch<UserProvider>().user ?? FirebaseAuth.instance.currentUser;
+    final user =
+        context.watch<UserProvider>().user ?? FirebaseAuth.instance.currentUser;
+
+    // ✅ Safely access animation color
+    final headerColor = _headerColorAnimation?.value ?? const Color(0xFF1A73E8);
 
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: headerColor,
         title: const Text('Profile'),
+        elevation: 4,
+        shadowColor: Colors.black45,
       ),
       body: Center(
         child: Padding(
@@ -88,6 +125,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: 24),
               _InfoTile(label: 'Username', value: user?.displayName ?? '-'),
               const SizedBox(height: 12),
+
               // --- District Input ---
               TextField(
                 controller: _districtController,
@@ -111,8 +149,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           onPressed: _isSaving
                               ? null
                               : () {
-                                  if (_districtController.text.trim().isNotEmpty &&
-                                      _districtController.text.trim() != _initialDistrict) {
+                                  final trimmed = _districtController.text.trim();
+                                  if (trimmed.isNotEmpty &&
+                                      trimmed != _initialDistrict) {
                                     _saveDistrict();
                                   }
                                 },
@@ -120,6 +159,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 enabled: !_isSaving,
               ),
+
               const SizedBox(height: 12),
               const Spacer(),
               SizedBox(
@@ -130,6 +170,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blueAccent,
                     foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                   onPressed: () async {
                     await AuthService().signOut();
@@ -177,7 +221,8 @@ class _ProfileAvatar extends StatelessWidget {
       backgroundColor: const Color(0xFF1A73E8),
       child: Text(
         initials.isEmpty ? 'U' : initials,
-        style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+        style: const TextStyle(
+            color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
       ),
     );
   }
@@ -203,14 +248,17 @@ class _InfoTile extends StatelessWidget {
             offset: const Offset(0, 4),
           ),
         ],
-        border: Border.all(color: const Color(0xFF1A73E8).withOpacity(0.1), width: 1),
+        border: Border.all(
+            color: const Color(0xFF1A73E8).withOpacity(0.1), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(label, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
           const SizedBox(height: 6),
-          Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+          Text(value,
+              style:
+                  const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
         ],
       ),
     );

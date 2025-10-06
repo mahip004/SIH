@@ -4,6 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'firebase_options.dart'; // 🔹 Firebase options
 import 'providers/user_provider.dart';
+import 'providers/app_provider.dart'; // <-- Add this import
 import 'screens/login_screen.dart';
 import 'screens/home_screen.dart'; // ✅ import the new Home Page
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -27,6 +28,7 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => UserProvider()),
+        ChangeNotifierProvider(create: (_) => AppProvider()), // <-- Add this line
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
@@ -69,10 +71,17 @@ class MyApp extends StatelessWidget {
         home: StreamBuilder<User?>(
           stream: FirebaseAuth.instance.authStateChanges(),
           builder: (context, snapshot) {
-            // Update provider whenever auth state changes
-            WidgetsBinding.instance.addPostFrameCallback((_) {
+            WidgetsBinding.instance.addPostFrameCallback((_) async {
               Provider.of<UserProvider>(context, listen: false)
                   .setUser(snapshot.data);
+
+              // Fetch user name from Firestore and set in AppProvider
+              if (snapshot.hasData) {
+                final uid = snapshot.data!.uid;
+                final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+                final name = doc.data()?['name'] ?? '';
+                Provider.of<AppProvider>(context, listen: false).setUserName(name);
+              }
             });
 
             if (snapshot.connectionState == ConnectionState.waiting) {

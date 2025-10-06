@@ -14,7 +14,6 @@ import '../models/report_model.dart';
 import '../services/report_storage_service.dart';
 import 'package:printing/printing.dart';
 
-
 class ResultScreen extends StatefulWidget {
   const ResultScreen({super.key});
 
@@ -22,7 +21,7 @@ class ResultScreen extends StatefulWidget {
   State<ResultScreen> createState() => _ResultScreenState();
 }
 
-class _ResultScreenState extends State<ResultScreen> {
+class _ResultScreenState extends State<ResultScreen> with SingleTickerProviderStateMixin {
   double waterAvailable = 0.0;
   String suggestedStructure = "Calculating...";
   double tankCapacityLitres = 0.0;
@@ -39,10 +38,33 @@ class _ResultScreenState extends State<ResultScreen> {
   RechargeConfig? selectedRecharge;
   String? structureImagePath;
 
+
+
   @override
   void initState() {
     super.initState();
     calculateWaterAvailability();
+
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 6),
+    )..repeat(reverse: true);
+
+    _headerColorAnimation = ColorTween(
+      begin: const Color(0xFFF5F7FA), // very light white-grey
+  end: const Color(0xFFE3E9F2),   // another soft white-grey
+    ).animate(_animationController!);
+
+    _animationController!.addListener(() {
+      setState(() {});
+    });
+  }
+AnimationController? _animationController;
+  Animation<Color?>? _headerColorAnimation;
+  @override
+  void dispose() {
+    _animationController?.dispose();
+    super.dispose();
   }
 
   double _nearestRainfall(double rainfallValue) {
@@ -124,7 +146,7 @@ class _ResultScreenState extends State<ResultScreen> {
     final baseLabel = selectedRecharge?.label ?? (recharge?['type'] ?? 'Recharge Structure');
     suggestedStructure = "$baseLabel ($suffixLabel)";
 
-    // ✅ Optimized Cost Estimation
+    // Optimized Cost Estimation
     final minCostPerLitre = 0.8; // ₹ per litre
     final maxCostPerLitre = 1.2; // ₹ per litre
     final minCost = tankCapacityLitres * minCostPerLitre;
@@ -222,10 +244,11 @@ class _ResultScreenState extends State<ResultScreen> {
   @override
   Widget build(BuildContext context) {
     final userProvider = Provider.of<UserProvider>(context);
+    final headerColor = _headerColorAnimation?.value ?? const Color(0xFF1A73E8);
     return Scaffold(
       body: suggestedStructure == "Calculating..."
           ? _buildLoading()
-          : _buildResultContent(userProvider),
+          : _buildResultContent(userProvider, headerColor),
     );
   }
 
@@ -258,7 +281,7 @@ class _ResultScreenState extends State<ResultScreen> {
     );
   }
 
-  Widget _buildResultContent(UserProvider userProvider) {
+  Widget _buildResultContent(UserProvider userProvider, Color headerColor) {
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -270,7 +293,7 @@ class _ResultScreenState extends State<ResultScreen> {
       child: SafeArea(
         child: Column(
           children: [
-            _buildAppBar(),
+            _buildAppBar(headerColor),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(20),
@@ -331,38 +354,94 @@ class _ResultScreenState extends State<ResultScreen> {
     );
   }
 
-  Widget _buildAppBar() {
+  Widget _buildAppBar(Color headerColor) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      decoration: const BoxDecoration(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+      decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [Color(0xFF1A73E8), Color(0xFF2A93D5)],
+          colors: const [Color(0xFF1A73E8), Color(0xFF2A93D5)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         boxShadow: [
-          BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, 4))
+          BoxShadow(
+            color: Colors.black.withOpacity(0.15),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
         ],
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(32),
+          bottomRight: Radius.circular(32),
+        ),
       ),
       child: Row(
         children: [
           GestureDetector(
             onTap: () => Navigator.pop(context),
-            child: const Icon(Icons.arrow_back_ios, color: Colors.white, size: 20),
+            child: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.12),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: const Icon(Icons.arrow_back_ios, color: Colors.white, size: 22),
+            ),
           ),
-          const SizedBox(width: 16),
-          const Text(
+          const SizedBox(width: 18),
+          Text(
             "Feasibility Report",
-            style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              color: headerColor,
+              fontSize: 22,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 1.1,
+              shadows: const [
+                Shadow(
+                  color: Colors.black26,
+                  offset: Offset(0, 3),
+                  blurRadius: 6,
+                ),
+              ],
+            ),
           ),
           const Spacer(),
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(8),
+          InkWell(
+            onTap: isSavingReport ? null : _saveReport,
+            borderRadius: BorderRadius.circular(24),
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF42A5F5), Color(0xFF1A73E8)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF1A73E8).withOpacity(0.7),
+                    blurRadius: 12,
+                    offset: const Offset(0, 6),
+                    spreadRadius: 1,
+                  ),
+                ],
+              ),
+              child: isSavingReport
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                    )
+                  : const Icon(Icons.save_alt, color: Colors.white, size: 24),
             ),
-            child: const Icon(Icons.save_alt, color: Colors.white, size: 20),
           ),
         ],
       ),
@@ -379,7 +458,7 @@ class _ResultScreenState extends State<ResultScreen> {
               const Text(
                 "Rainwater Harvesting Insights",
                 style: TextStyle(
-                  fontSize: 24,
+                  fontSize: 26,
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF1A73E8),
                   letterSpacing: 0.5,
@@ -388,120 +467,131 @@ class _ResultScreenState extends State<ResultScreen> {
               const SizedBox(height: 6),
               Text(
                 "Based on your location and property details",
-                style: TextStyle(fontSize: 14, color: Colors.grey[700], height: 1.3),
+                style: TextStyle(fontSize: 15, color: Colors.grey[700], height: 1.3),
               ),
             ],
           ),
         ),
         Container(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: const Color(0xFF1A73E8).withOpacity(0.1),
-            borderRadius: BorderRadius.circular(16),
+            color: const Color(0xFF1A73E8).withOpacity(0.12),
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF1A73E8).withOpacity(0.3),
+                blurRadius: 14,
+                offset: const Offset(0, 6),
+              ),
+            ],
           ),
-          child: const Icon(Icons.insights, color: Color(0xFF1A73E8), size: 28),
+          child: const Icon(Icons.insights, color: Color(0xFF1A73E8), size: 30),
         ),
       ],
     );
   }
 
   Widget _buildActionButtons(UserProvider userProvider) {
-  return Column(
-    children: [
-      Row(
-        children: [
-          Expanded(
-            child: ElevatedButton.icon(
-              onPressed: () => Navigator.pop(context),
-              icon: const Icon(Icons.arrow_back),
-              label: const Text("Back"),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: const Color(0xFF1A73E8),
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  side: BorderSide(color: const Color(0xFF1A73E8).withOpacity(0.3), width: 1),
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: ElevatedButton.icon(
+                onPressed: () => Navigator.pop(context),
+                icon: const Icon(Icons.arrow_back),
+                label: const Text("Back"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: const Color(0xFF1A73E8),
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    side: BorderSide(color: const Color(0xFF1A73E8).withOpacity(0.3), width: 1.5),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
               ),
             ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: ElevatedButton.icon(
-              onPressed: isSavingReport ? null : _saveReport,
-              icon: isSavingReport
-                  ? const SizedBox(
-                      width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                  : const Icon(Icons.save),
-              label: Text(isSavingReport ? "Saving..." : "Save Report"),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF1A73E8),
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            const SizedBox(width: 16),
+            Expanded(
+              child: ElevatedButton.icon(
+                onPressed: isSavingReport ? null : _saveReport,
+                icon: isSavingReport
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      )
+                    : const Icon(Icons.save),
+                label: Text(isSavingReport ? "Saving..." : "Save Report"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF1A73E8),
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
               ),
             ),
-          ),
-        ],
-      ),
-      const SizedBox(height: 16),
-      // Download PDF button
-      SizedBox(
-        width: double.infinity,
-        child: ElevatedButton.icon(
-          onPressed: () async {
-            final report = ReportModel(
-              id: DateTime.now().millisecondsSinceEpoch.toString(),
-              date: DateTime.now(),
-              state: userProvider.state,
-              soilType: userProvider.soilType,
-              numberOfDwellers: userProvider.numberOfDwellers,
-              roofArea: userProvider.roofArea,
-              roofType: userProvider.roofType,
-              roofMaterial: userProvider.roofMaterial,
-              runoffCoefficient: userProvider.runoffCoefficient,
-              openSpace: userProvider.openSpace,
-              waterAvailable: waterAvailable,
-              suggestedStructure: suggestedStructure,
-              tankCapacityLitres: tankCapacityLitres,
-              costEstimation: costEstimation,
-              storageDimensions: storageDim,
-              rechargeStructure: recharge,
-              pipeInfo: selectedPipe != null
-                  ? "Pipe: ${selectedPipe!.diameter} mm dia × ${selectedPipe!.width} mm width"
-                  : "No suitable pipe found",
-            );
+          ],
+        ),
+        const SizedBox(height: 20),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            onPressed: () async {
+              final report = ReportModel(
+                id: DateTime.now().millisecondsSinceEpoch.toString(),
+                date: DateTime.now(),
+                state: userProvider.state,
+                soilType: userProvider.soilType,
+                numberOfDwellers: userProvider.numberOfDwellers,
+                roofArea: userProvider.roofArea,
+                roofType: userProvider.roofType,
+                roofMaterial: userProvider.roofMaterial,
+                runoffCoefficient: userProvider.runoffCoefficient,
+                openSpace: userProvider.openSpace,
+                waterAvailable: waterAvailable,
+                suggestedStructure: suggestedStructure,
+                tankCapacityLitres: tankCapacityLitres,
+                costEstimation: costEstimation,
+                storageDimensions: storageDim,
+                rechargeStructure: recharge,
+                pipeInfo: selectedPipe != null
+                    ? "Pipe: ${selectedPipe!.diameter} mm dia × ${selectedPipe!.width} mm width"
+                    : "No suitable pipe found",
+              );
 
-            try {
-              final pdfData = await PdfGenerator.generateReportPdf(report);
-              await Printing.layoutPdf(onLayout: (format) => pdfData);
-            } catch (e) {
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Error generating PDF: $e'),
-                    backgroundColor: Colors.red,
-                    behavior: SnackBarBehavior.floating,
-                  ),
-                );
+              try {
+                final pdfData = await PdfGenerator.generateReportPdf(report);
+                await Printing.layoutPdf(onLayout: (format) => pdfData);
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Error generating PDF: $e'),
+                      backgroundColor: Colors.red,
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                }
               }
-            }
-          },
-          icon: const Icon(Icons.download),
-          label: const Text("Download PDF"),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF26A69A),
-            foregroundColor: Colors.white,
-            elevation: 0,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            },
+            icon: const Icon(Icons.download),
+            label: const Text("Download PDF"),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF26A69A),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              padding: const EdgeInsets.symmetric(vertical: 14),
+            ),
           ),
         ),
-      ),
-    ],
-  );
-}
-
+      ],
+    );
+  }
 
   Widget _buildInsightCard({
     required IconData icon,
@@ -511,20 +601,31 @@ class _ResultScreenState extends State<ResultScreen> {
     required List<Color> gradientColors,
   }) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 18),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: gradientColors[0].withOpacity(0.15), blurRadius: 10, offset: const Offset(0, 4))],
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: gradientColors[0].withOpacity(0.2),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
+          ),
+          BoxShadow(
+            color: Colors.white,
+            blurRadius: 10,
+            offset: const Offset(-6, -6),
+          ),
+        ],
       ),
       child: Material(
         color: Colors.transparent,
         child: Ink(
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(20),
           ),
           child: InkWell(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(20),
             onTap: () {
               if (imagePath != null) {
                 Navigator.push(
@@ -533,8 +634,10 @@ class _ResultScreenState extends State<ResultScreen> {
                 );
               }
             },
+            splashColor: gradientColors[1].withOpacity(0.2),
+            highlightColor: Colors.transparent,
             child: Padding(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(22),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -542,31 +645,42 @@ class _ResultScreenState extends State<ResultScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(12),
+                        padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
                           gradient: LinearGradient(colors: gradientColors, begin: Alignment.topLeft, end: Alignment.bottomRight),
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(14),
+                          boxShadow: [
+                            BoxShadow(
+                              color: gradientColors[1].withOpacity(0.6),
+                              blurRadius: 14,
+                              offset: const Offset(0, 6),
+                            ),
+                          ],
                         ),
-                        child: Icon(icon, size: 24, color: Colors.white),
+                        child: Icon(icon, size: 28, color: Colors.white),
                       ),
-                      const SizedBox(width: 16),
+                      const SizedBox(width: 18),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(title,
-                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF2D3748))),
-                            const SizedBox(height: 8),
-                            Text(value, style: TextStyle(fontSize: 15, color: Colors.grey[800], height: 1.5)),
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF2D3748),
+                                )),
+                            const SizedBox(height: 10),
+                            Text(value, style: TextStyle(fontSize: 16, color: Colors.grey[800], height: 1.5)),
                           ],
                         ),
                       ),
                     ],
                   ),
                   if (imagePath != null) ...[
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 18),
                     ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(20),
                       child: ImageWidget(imagePath: imagePath),
                     ),
                   ],
@@ -588,8 +702,8 @@ class ImageWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return imagePath.startsWith('http')
-        ? Image.network(imagePath, fit: BoxFit.contain, width: double.infinity, height: 180)
-        : Image.asset(imagePath, fit: BoxFit.contain, width: double.infinity, height: 180);
+        ? Image.network(imagePath, fit: BoxFit.contain, width: double.infinity, height: 200)
+        : Image.asset(imagePath, fit: BoxFit.contain, width: double.infinity, height: 200);
   }
 }
 

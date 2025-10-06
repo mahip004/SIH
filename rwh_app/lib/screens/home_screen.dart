@@ -1,230 +1,123 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:flutter/services.dart'; // For haptic feedback
+import 'package:provider/provider.dart'; // Add this import
 import 'feasibility_form.dart';
 import 'trends_screen.dart';
 import 'past_reports_screen.dart';
 import 'profile_screen.dart';
 import 'users_in_district_screen.dart';
+import '../providers/app_provider.dart'; // Import your AppProvider
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
+  // Animation controller for card tap scaling effect
+  late final AnimationController _animationController;
+
+  // Cards data model
+  final List<_HomeCardData> _homeCards = [
+    _HomeCardData(
+      icon: FontAwesomeIcons.chartLine,
+      title: "Water Insights",
+      subtitle: "See recent trends and rainfall updates",
+      gradientColors: [Color(0xFF1976D2), Color(0xFF42A5F5)],
+      screenBuilder: () => const TrendsScreen(),
+    ),
+    _HomeCardData(
+      icon: FontAwesomeIcons.droplet,
+      title: "Check Feasibility",
+      subtitle: "Evaluate rooftop rainwater harvesting potential",
+      gradientColors: [Color(0xFF00897B), Color(0xFF26A69A)],
+      screenBuilder: () => const FeasibilityForm(),
+    ),
+    _HomeCardData(
+      icon: FontAwesomeIcons.clockRotateLeft,
+      title: "Past Reports",
+      subtitle: "View your previous feasibility results",
+      gradientColors: [Color(0xFF3949AB), Color(0xFF5C6BC0)],
+      screenBuilder: () => const PastReportsScreen(),
+    ),
+    _HomeCardData(
+      icon: FontAwesomeIcons.users,
+      title: "Users in Your District",
+      subtitle: "See how many others are using RWH in your area",
+      gradientColors: [Color(0xFF43CEA2), Color(0xFF185A9D)],
+      screenBuilder: () => const UsersInDistrictScreen(),
+    ),
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 120),
+      lowerBound: 0.95,
+      upperBound: 1.0,
+      value: 1.0,
+    );
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _onCardTap(_HomeCardData card) async {
+    // Haptic feedback for authentic interaction
+    HapticFeedback.lightImpact();
+
+    // Animate scale down and up
+    await _animationController.reverse();
+    await _animationController.forward();
+
+    // Navigate after animation
+    if (mounted) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => card.screenBuilder()),
+      );
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final primaryColor = const Color(0xFF1565C0);
+    final backgroundGradient = LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [primaryColor.withOpacity(0.07), Colors.white],
+    );
+
+    // Fetch userr from AppProvider
+    final userName = Provider.of<AppProvider>(context).userName;
+    final firstName = userName.trim().split(' ').first; // <-- Only first name
+
     return Scaffold(
+      backgroundColor: Colors.grey.shade50,
       body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              const Color(0xFF1A73E8).withOpacity(0.05),
-              Colors.white,
-            ],
-          ),
-        ),
+        decoration: BoxDecoration(gradient: backgroundGradient),
         child: SafeArea(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Custom App Bar with Profile
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF1A73E8), Color(0xFF2A93D5)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.water_drop, color: Colors.white, size: 24),
-                    const SizedBox(width: 10),
-                    const Expanded(
-                      child: Text(
-                        "Rainwater Hub",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    InkWell(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => const ProfileScreen()),
-                        );
-                      },
-                      child: const CircleAvatar(
-                        radius: 18,
-                        backgroundColor: Colors.white,
-                        child: Icon(Icons.person, color: Color(0xFF1A73E8)),
-                      ),
-                    )
-                  ],
-                ),
-              ),
-
+              _buildAppBar(primaryColor),
               Expanded(
                 child: ListView(
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                  physics: const BouncingScrollPhysics(),
                   children: [
-                    // Welcome message
-                    Container(
-                      margin: const EdgeInsets.only(bottom: 24, top: 10),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  "Welcome 👋",
-                                  style: TextStyle(
-                                    fontSize: 26,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFF1A73E8),
-                                    letterSpacing: 0.5,
-                                  ),
-                                ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  "Track and manage your rainwater harvesting",
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey[700],
-                                    letterSpacing: 0.2,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF1A73E8).withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: const Icon(
-                              Icons.cloud,
-                              color: Color(0xFF1A73E8),
-                              size: 32,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    // --- Water Insights ---
-                    _buildHomeCard(
-                      context,
-                      icon: FontAwesomeIcons.chartLine,
-                      title: "Water Insights",
-                      subtitle: "See recent trends and rainfall updates",
-                      gradientColors: const [Color(0xFF2A93D5), Color(0xFF3FA2F7)],
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => const TrendsScreen()),
-                        );
-                      },
-                    ),
-
-                    // --- Check Feasibility ---
-                    _buildHomeCard(
-                      context,
-                      icon: FontAwesomeIcons.droplet,
-                      title: "Check Feasibility",
-                      subtitle: "Evaluate rooftop rainwater harvesting potential",
-                      gradientColors: const [Color(0xFF26A69A), Color(0xFF4DB6AC)],
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => const FeasibilityForm()),
-                        );
-                      },
-                    ),
-
-                    // --- Past Reports ---
-                    _buildHomeCard(
-                      context,
-                      icon: FontAwesomeIcons.clockRotateLeft,
-                      title: "Past Reports",
-                      subtitle: "View your previous feasibility results",
-                      gradientColors: const [Color(0xFF5C6BC0), Color(0xFF7986CB)],
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => const PastReportsScreen()),
-                        );
-                      },
-                    ),
-
-                    _buildHomeCard(
-                      context,
-                      icon: FontAwesomeIcons.users,
-                      title: "Users in Your District",
-                      subtitle: "See how many others are using RWH in your area",
-                      gradientColors: const [Color(0xFF43CEA2), Color(0xFF185A9D)],
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => const UsersInDistrictScreen()),
-                        );
-                      },
-                    ),
-
-                    // Water facts card
-                    Container(
-                      margin: const EdgeInsets.only(top: 20),
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                        border: Border.all(
-                          color: const Color(0xFF1A73E8).withOpacity(0.1),
-                          width: 1,
-                        ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            "Water Saving Tip",
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF1A73E8),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            "Harvesting rainwater from a 1,000 sq ft roof can save up to 600 gallons of water during a 1-inch rainfall.",
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey[800],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                    _buildWelcomeSection(theme, primaryColor, firstName), // <-- Pass firstName
+                    ..._buildHomeCardsList(),
+                    _buildWaterSavingTip(theme, primaryColor),
                   ],
                 ),
               ),
@@ -235,96 +128,329 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  // --- Home Cards ---
-  Widget _buildHomeCard(
-      BuildContext context, {
-        required IconData icon,
-        required String title,
-        required String subtitle,
-        required List<Color> gradientColors,
-        required VoidCallback onTap,
-      }) {
+  Widget _buildAppBar(Color primaryColor) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
+        gradient: LinearGradient(
+          colors: [primaryColor.darken(0.1), primaryColor],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
         boxShadow: [
           BoxShadow(
-            color: gradientColors[0].withOpacity(0.15),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: Colors.black.withOpacity(0.15),
+            blurRadius: 15,
+            offset: const Offset(0, 6),
           ),
         ],
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(28),
+          bottomRight: Radius.circular(28),
+        ),
       ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(16),
-          child: Ink(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: gradientColors,
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(icon, size: 24, color: Colors.white),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          title,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF2D3748),
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          subtitle,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey[700],
-                            height: 1.3,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: gradientColors[0].withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(
-                      Icons.arrow_forward_ios,
-                      size: 16,
-                      color: gradientColors[0],
-                    ),
+      child: Row(
+        children: [
+          const Icon(Icons.water_drop, color: Colors.white, size: 28),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              "Rainwater Hub",
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 26,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 0.7,
+                shadows: [
+                  Shadow(
+                    color: Colors.black26,
+                    offset: Offset(0, 1),
+                    blurRadius: 2,
                   ),
                 ],
               ),
             ),
           ),
+          InkWell(
+            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen())),
+            borderRadius: BorderRadius.circular(24),
+            splashColor: Colors.white24,
+            child: const CircleAvatar(
+              radius: 22,
+              backgroundColor: Colors.white,
+              child: Icon(Icons.person, color: Color(0xFF1565C0), size: 26),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Update _buildWelcomeSection to accept userName
+  Widget _buildWelcomeSection(ThemeData theme, Color primaryColor, String userName) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 28, top: 12),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Welcome back, $userName 👋",
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w900,
+                    color: primaryColor,
+                    letterSpacing: 0.8,
+                    height: 1.1,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  "Track and manage your rainwater harvesting with ease",
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: Colors.grey.shade800,
+                    letterSpacing: 0.3,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: primaryColor.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: primaryColor.withOpacity(0.25),
+                  blurRadius: 10,
+                  offset: const Offset(1, 4),
+                ),
+              ],
+            ),
+            child: const Icon(
+              Icons.cloud,
+              color: Color(0xFF1565C0),
+              size: 36,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<Widget> _buildHomeCardsList() {
+    return _homeCards
+        .map(
+          (card) => AnimatedBuilder(
+            animation: _animationController,
+            builder: (context, child) {
+              return Transform.scale(
+                scale: _animationController.value,
+                child: child,
+              );
+            },
+            child: _HomeCard(
+              icon: card.icon,
+              title: card.title,
+              subtitle: card.subtitle,
+              gradientColors: card.gradientColors,
+              onTap: () => _onCardTap(card),
+            ),
+          ),
+        )
+        .toList();
+  }
+
+  Widget _buildWaterSavingTip(ThemeData theme, Color primaryColor) {
+    return Container(
+      margin: const EdgeInsets.only(top: 28, bottom: 16),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
+        border: Border.all(
+          color: primaryColor.withOpacity(0.15),
+          width: 1.2,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "💧 Water Saving Tip",
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w900,
+              color: primaryColor,
+              letterSpacing: 0.4,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            "Harvesting rainwater from a 1,000 sq ft roof can save up to 600 gallons "
+            "of water during a 1-inch rainfall. Implementing rainwater harvesting "
+            "helps conserve water and reduces demand on municipal supplies.",
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: Colors.grey.shade900,
+              height: 1.5,
+              letterSpacing: 0.3,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// Data model for the home cards
+class _HomeCardData {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final List<Color> gradientColors;
+  final Widget Function() screenBuilder;
+
+  _HomeCardData({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.gradientColors,
+    required this.screenBuilder,
+  });
+}
+
+// Home card widget with elevated modern design
+class _HomeCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final List<Color> gradientColors;
+  final VoidCallback onTap;
+
+  const _HomeCard({
+    Key? key,
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.gradientColors,
+    required this.onTap,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: gradientColors[0].withOpacity(0.18),
+            blurRadius: 18,
+            offset: const Offset(0, 6),
+          ),
+          BoxShadow(
+            color: gradientColors[1].withOpacity(0.15),
+            blurRadius: 12,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(20),
+          splashColor: gradientColors[1].withOpacity(0.3),
+          highlightColor: gradientColors[0].withOpacity(0.15),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 22, horizontal: 24),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: gradientColors,
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: gradientColors[1].withOpacity(0.5),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Icon(icon, size: 28, color: Colors.white),
+                ),
+                const SizedBox(width: 20),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFF263238),
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        subtitle,
+                        style: TextStyle(
+                          fontSize: 15,
+                          color: Colors.grey.shade700,
+                          height: 1.4,
+                          letterSpacing: 0.2,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: gradientColors[0].withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    Icons.arrow_forward_ios,
+                    size: 18,
+                    color: gradientColors[0],
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
+  }
+}
+
+// Extension method to darken a color by [amount] (0-1)
+extension ColorUtils on Color {
+  Color darken([double amount = .1]) {
+    assert(amount >= 0 && amount <= 1);
+    final hsl = HSLColor.fromColor(this);
+    final hslDark = hsl.withLightness((hsl.lightness - amount).clamp(0.0, 1.0));
+    return hslDark.toColor();
   }
 }
