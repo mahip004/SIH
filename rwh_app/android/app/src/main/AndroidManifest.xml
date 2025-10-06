@@ -3,6 +3,8 @@
     <!-- ✅ Add location permissions here -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <!-- Required for network requests (release builds won't inherit debug manifest) -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <!-- Optional: for background location on Android 10+ -->
     <!-- <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION"/> -->
 
