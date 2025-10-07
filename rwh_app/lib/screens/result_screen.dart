@@ -13,6 +13,7 @@ import '../helpers/pdf_generator.dart';
 import '../models/report_model.dart';
 import '../services/report_storage_service.dart';
 import 'package:printing/printing.dart';
+import '../l10n/app_localizations.dart';
 
 class ResultScreen extends StatefulWidget {
   const ResultScreen({super.key});
@@ -228,13 +229,12 @@ AnimationController? _animationController;
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Error saving report. Please try again.'),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-          ),
+        const snack = SnackBar(
+          content: Text('Error saving report. Please try again.'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
         );
+        ScaffoldMessenger.of(context).showSnackBar(snack);
       }
     } finally {
       if (mounted) setState(() => isSavingReport = false);
@@ -245,14 +245,15 @@ AnimationController? _animationController;
   Widget build(BuildContext context) {
     final userProvider = Provider.of<UserProvider>(context);
     final headerColor = _headerColorAnimation?.value ?? const Color(0xFF1A73E8);
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       body: suggestedStructure == "Calculating..."
-          ? _buildLoading()
-          : _buildResultContent(userProvider, headerColor),
+          ? _buildLoading(l10n)
+          : _buildResultContent(userProvider, headerColor, l10n),
     );
   }
 
-  Widget _buildLoading() {
+  Widget _buildLoading(AppLocalizations l10n) {
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -261,15 +262,15 @@ AnimationController? _animationController;
           colors: [const Color(0xFF1A73E8).withOpacity(0.05), Colors.white],
         ),
       ),
-      child: const Center(
+      child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CircularProgressIndicator(color: Color(0xFF1A73E8)),
-            SizedBox(height: 16),
+            const CircularProgressIndicator(color: Color(0xFF1A73E8)),
+            const SizedBox(height: 16),
             Text(
-              "Calculating your results...",
-              style: TextStyle(
+              l10n.saving, // reuse as loading text alternative not ideal but fine here
+              style: const TextStyle(
                 color: Color(0xFF1A73E8),
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
@@ -281,7 +282,7 @@ AnimationController? _animationController;
     );
   }
 
-  Widget _buildResultContent(UserProvider userProvider, Color headerColor) {
+  Widget _buildResultContent(UserProvider userProvider, Color headerColor, AppLocalizations l10n) {
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -293,57 +294,57 @@ AnimationController? _animationController;
       child: SafeArea(
         child: Column(
           children: [
-            _buildAppBar(headerColor),
+            _buildAppBar(headerColor, l10n),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildHeader(),
+                    _buildHeader(l10n),
                     const SizedBox(height: 24),
                     _buildInsightCard(
                       icon: FontAwesomeIcons.database,
-                      title: "Storage Tank",
+                      title: l10n.storageTank,
                       value:
-                          "${rwh.storageType}\nVolume: ${rwh.storageVolume.toStringAsFixed(0)} L\nDimensions: ${storageDim?['diameter']?.toStringAsFixed(1) ?? 0} m dia × ${storageDim?['height']?.toStringAsFixed(1) ?? 0} m height\n${isFetchingPipe ? "Loading pipe dimensions..." : selectedPipe != null ? "Pipe: ${selectedPipe!.diameter} mm dia × ${selectedPipe!.width} mm width" : "No suitable pipe found"}",
+                          "${l10n.volumeLabel}: ${rwh.storageVolume.toStringAsFixed(0)} L\n${l10n.dimensionsLabel}: ${storageDim?['diameter']?.toStringAsFixed(1) ?? 0} m dia × ${storageDim?['height']?.toStringAsFixed(1) ?? 0} m height\n${isFetchingPipe ? l10n.loadingPipe : selectedPipe != null ? l10n.pipeInfo('${selectedPipe!.diameter}', '${selectedPipe!.width}') : l10n.noSuitablePipe}",
                       gradientColors: const [Color(0xFF1A73E8), Color(0xFF2A93D5)],
                     ),
                     _buildInsightCard(
                       icon: FontAwesomeIcons.seedling,
-                      title: "Recharge Structure",
+                      title: l10n.rechargeStructure,
                       value:
-                          "${recharge?['type'] ?? 'N/A'}\nRecommended Dimensions: ${recharge?['dimensions'] ?? 'N/A'}\nEstimated Runoff Available: ${waterAvailable.toStringAsFixed(0)} L/year",
+                          "${recharge?['type'] ?? 'N/A'}\n${l10n.recommendedDimensions}: ${recharge?['dimensions'] ?? 'N/A'}\n${l10n.estimatedRunoffAvailable}: ${l10n.litresPerYear(waterAvailable.toStringAsFixed(0))}",
                       gradientColors: const [Color(0xFF26A69A), Color(0xFF4DB6AC)],
                       imagePath: structureImagePath,
                     ),
                     _buildInsightCard(
                       icon: FontAwesomeIcons.water,
-                      title: "Runoff Generation Capacity",
-                      value: "${waterAvailable.toStringAsFixed(0)} litres/year (with runoff coefficient)",
+                      title: l10n.runoffCapacity,
+                      value: "${l10n.litresPerYear(waterAvailable.toStringAsFixed(0))} (with runoff coefficient)",
                       gradientColors: const [Color(0xFF5C6BC0), Color(0xFF7986CB)],
                     ),
                     _buildInsightCard(
                       icon: FontAwesomeIcons.database,
-                      title: "Required Tank Capacity",
+                      title: l10n.requiredTankCapacity,
                       value:
-                          "${tankCapacityLitres.toStringAsFixed(0)} litres (For ${userProvider.numberOfDwellers} persons, $scarcityDays days)",
+                          "${tankCapacityLitres.toStringAsFixed(0)} litres (${l10n.personsDays(userProvider.numberOfDwellers.toString(), scarcityDays.toString())})",
                       gradientColors: const [Color(0xFF1A73E8), Color(0xFF2A93D5)],
                     ),
                     _buildInsightCard(
                       icon: FontAwesomeIcons.coins,
-                      title: "Cost Estimation & Benefit",
+                      title: l10n.costEstimationBenefit,
                       value: costEstimation,
                       gradientColors: const [Color(0xFFFF9800), Color(0xFFFFB74D)],
                     ),
                     _buildInsightCard(
                       icon: FontAwesomeIcons.seedling,
-                      title: "Soil Type",
+                      title: l10n.soilTypeLabel,
                       value: userProvider.soilType,
                       gradientColors: const [Color(0xFF26A69A), Color(0xFF4DB6AC)],
                     ),
                     const SizedBox(height: 30),
-                    _buildActionButtons(userProvider),
+                    _buildActionButtons(userProvider, l10n),
                   ],
                 ),
               ),
@@ -354,7 +355,7 @@ AnimationController? _animationController;
     );
   }
 
-  Widget _buildAppBar(Color headerColor) {
+  Widget _buildAppBar(Color headerColor, AppLocalizations l10n) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
       decoration: BoxDecoration(
@@ -397,7 +398,7 @@ AnimationController? _animationController;
           ),
           const SizedBox(width: 18),
           Text(
-            "Feasibility Report",
+            l10n.feasibilityReportTitle,
             style: TextStyle(
               color: headerColor,
               fontSize: 22,
@@ -448,16 +449,16 @@ AnimationController? _animationController;
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(AppLocalizations l10n) {
     return Row(
       children: [
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                "Rainwater Harvesting Insights",
-                style: TextStyle(
+              Text(
+                l10n.insightsHeader,
+                style: const TextStyle(
                   fontSize: 26,
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF1A73E8),
@@ -466,7 +467,7 @@ AnimationController? _animationController;
               ),
               const SizedBox(height: 6),
               Text(
-                "Based on your location and property details",
+                l10n.insightsSub,
                 style: TextStyle(fontSize: 15, color: Colors.grey[700], height: 1.3),
               ),
             ],
@@ -491,7 +492,7 @@ AnimationController? _animationController;
     );
   }
 
-  Widget _buildActionButtons(UserProvider userProvider) {
+  Widget _buildActionButtons(UserProvider userProvider, AppLocalizations l10n) {
     return Column(
       children: [
         Row(
@@ -500,7 +501,7 @@ AnimationController? _animationController;
               child: ElevatedButton.icon(
                 onPressed: () => Navigator.pop(context),
                 icon: const Icon(Icons.arrow_back),
-                label: const Text("Back"),
+                label: Text(l10n.back),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
                   foregroundColor: const Color(0xFF1A73E8),
@@ -524,7 +525,7 @@ AnimationController? _animationController;
                         child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                       )
                     : const Icon(Icons.save),
-                label: Text(isSavingReport ? "Saving..." : "Save Report"),
+                label: Text(isSavingReport ? l10n.saving : l10n.saveReport),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF1A73E8),
                   foregroundColor: Colors.white,
@@ -570,7 +571,7 @@ AnimationController? _animationController;
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('Error generating PDF: $e'),
+                      content: Text('${l10n.errorGeneratingPdf}: $e'),
                       backgroundColor: Colors.red,
                       behavior: SnackBarBehavior.floating,
                     ),
@@ -579,7 +580,7 @@ AnimationController? _animationController;
               }
             },
             icon: const Icon(Icons.download),
-            label: const Text("Download PDF"),
+            label: Text(l10n.downloadPdf),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF26A69A),
               foregroundColor: Colors.white,
@@ -610,10 +611,10 @@ AnimationController? _animationController;
             blurRadius: 14,
             offset: const Offset(0, 6),
           ),
-          BoxShadow(
+          const BoxShadow(
             color: Colors.white,
             blurRadius: 10,
-            offset: const Offset(-6, -6),
+            offset: Offset(-6, -6),
           ),
         ],
       ),

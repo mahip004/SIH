@@ -8,6 +8,7 @@ import 'past_reports_screen.dart';
 import 'profile_screen.dart';
 import 'users_in_district_screen.dart';
 import '../providers/app_provider.dart'; // Import your AppProvider
+import '../l10n/app_localizations.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -21,36 +22,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   late final AnimationController _animationController;
 
   // Cards data model
-  final List<_HomeCardData> _homeCards = [
-    _HomeCardData(
-      icon: FontAwesomeIcons.chartLine,
-      title: "Water Insights",
-      subtitle: "See recent trends and rainfall updates",
-      gradientColors: [Color(0xFF1976D2), Color(0xFF42A5F5)],
-      screenBuilder: () => const TrendsScreen(),
-    ),
-    _HomeCardData(
-      icon: FontAwesomeIcons.droplet,
-      title: "Check Feasibility",
-      subtitle: "Evaluate rooftop rainwater harvesting potential",
-      gradientColors: [Color(0xFF00897B), Color(0xFF26A69A)],
-      screenBuilder: () => const FeasibilityForm(),
-    ),
-    _HomeCardData(
-      icon: FontAwesomeIcons.clockRotateLeft,
-      title: "Past Reports",
-      subtitle: "View your previous feasibility results",
-      gradientColors: [Color(0xFF3949AB), Color(0xFF5C6BC0)],
-      screenBuilder: () => const PastReportsScreen(),
-    ),
-    _HomeCardData(
-      icon: FontAwesomeIcons.users,
-      title: "Users in Your District",
-      subtitle: "See how many others are using RWH in your area",
-      gradientColors: [Color(0xFF43CEA2), Color(0xFF185A9D)],
-      screenBuilder: () => const UsersInDistrictScreen(),
-    ),
-  ];
+  late List<_HomeCardData> _homeCards;
 
   @override
   void initState() {
@@ -97,6 +69,39 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       colors: [primaryColor.withOpacity(0.07), Colors.white],
     );
 
+    final l10n = AppLocalizations.of(context);
+
+    _homeCards = [
+      _HomeCardData(
+        icon: FontAwesomeIcons.chartLine,
+        title: l10n.homeWaterInsightsTitle,
+        subtitle: l10n.homeWaterInsightsSub,
+        gradientColors: const [Color(0xFF1976D2), Color(0xFF42A5F5)],
+        screenBuilder: () => const TrendsScreen(),
+      ),
+      _HomeCardData(
+        icon: FontAwesomeIcons.droplet,
+        title: l10n.homeFeasibilityTitle,
+        subtitle: l10n.homeFeasibilitySub,
+        gradientColors: const [Color(0xFF00897B), Color(0xFF26A69A)],
+        screenBuilder: () => const FeasibilityForm(),
+      ),
+      _HomeCardData(
+        icon: FontAwesomeIcons.clockRotateLeft,
+        title: l10n.homePastReportsTitle,
+        subtitle: l10n.homePastReportsSub,
+        gradientColors: const [Color(0xFF3949AB), Color(0xFF5C6BC0)],
+        screenBuilder: () => const PastReportsScreen(),
+      ),
+      _HomeCardData(
+        icon: FontAwesomeIcons.users,
+        title: l10n.homeUsersInDistrictTitle,
+        subtitle: l10n.homeUsersInDistrictSub,
+        gradientColors: const [Color(0xFF43CEA2), Color(0xFF185A9D)],
+        screenBuilder: () => const UsersInDistrictScreen(),
+      ),
+    ];
+
     // Fetch userr from AppProvider
     final userName = Provider.of<AppProvider>(context).userName;
     final firstName = userName.trim().split(' ').first; // <-- Only first name
@@ -109,15 +114,15 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildAppBar(primaryColor),
+              _buildAppBar(primaryColor, l10n),
               Expanded(
                 child: ListView(
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
                   physics: const BouncingScrollPhysics(),
                   children: [
-                    _buildWelcomeSection(theme, primaryColor, firstName), // <-- Pass firstName
+                    _buildWelcomeSection(theme, primaryColor, l10n.homeWelcomeBack(firstName)), // <-- localized
                     ..._buildHomeCardsList(),
-                    _buildWaterSavingTip(theme, primaryColor),
+                    _buildWaterSavingTip(theme, primaryColor, l10n),
                   ],
                 ),
               ),
@@ -128,7 +133,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     );
   }
 
-  Widget _buildAppBar(Color primaryColor) {
+  Widget _buildAppBar(Color primaryColor, AppLocalizations l10n) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
       decoration: BoxDecoration(
@@ -155,7 +160,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              "Rainwater Hub",
+              l10n.appTitle,
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 26,
@@ -186,8 +191,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     );
   }
 
-  // Update _buildWelcomeSection to accept userName
-  Widget _buildWelcomeSection(ThemeData theme, Color primaryColor, String userName) {
+  // Update _buildWelcomeSection to accept string
+  Widget _buildWelcomeSection(ThemeData theme, Color primaryColor, String welcomeText) {
     return Container(
       margin: const EdgeInsets.only(bottom: 28, top: 12),
       child: Row(
@@ -197,7 +202,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "Welcome back, $userName 👋",
+                  welcomeText,
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.w900,
@@ -208,7 +213,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  "Track and manage your rainwater harvesting with ease",
+                  AppLocalizations.of(context).homeTagline,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: Colors.grey.shade800,
                     letterSpacing: 0.3,
@@ -265,7 +270,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         .toList();
   }
 
-  Widget _buildWaterSavingTip(ThemeData theme, Color primaryColor) {
+  Widget _buildWaterSavingTip(ThemeData theme, Color primaryColor, AppLocalizations l10n) {
     return Container(
       margin: const EdgeInsets.only(top: 28, bottom: 16),
       padding: const EdgeInsets.all(20),
@@ -288,7 +293,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            "💧 Water Saving Tip",
+            "💧 ${l10n.waterSavingTip}",
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w900,
@@ -298,9 +303,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           ),
           const SizedBox(height: 12),
           Text(
-            "Harvesting rainwater from a 1,000 sq ft roof can save up to 600 gallons "
-            "of water during a 1-inch rainfall. Implementing rainwater harvesting "
-            "helps conserve water and reduces demand on municipal supplies.",
+            l10n.waterSavingBody,
             style: theme.textTheme.bodyMedium?.copyWith(
               color: Colors.grey.shade900,
               height: 1.5,

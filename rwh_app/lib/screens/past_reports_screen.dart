@@ -5,6 +5,7 @@ import 'result_screen.dart';
 import '../models/report_model.dart';
 import '../services/report_storage_service.dart';
 import 'saved_report_detail_screen.dart';
+import '../l10n/app_localizations.dart';
 
 class PastReportsScreen extends StatefulWidget {
   const PastReportsScreen({super.key});
@@ -52,7 +53,7 @@ class _PastReportsScreenState extends State<PastReportsScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: const Text('Report deleted successfully'),
+              content: Text(AppLocalizations.of(context).reportDeleted),
               backgroundColor: Colors.green[600],
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
@@ -67,7 +68,7 @@ class _PastReportsScreenState extends State<PastReportsScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Failed to delete report'),
+            content: Text(AppLocalizations.of(context).failedDelete),
             backgroundColor: Colors.red[600],
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
@@ -82,10 +83,11 @@ class _PastReportsScreenState extends State<PastReportsScreen> {
   @override
   Widget build(BuildContext context) {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Past Reports"),
+        title: Text(l10n.pastReportsTitle),
         backgroundColor: const Color(0xFF0A66C2),
       ),
       body: Container(
@@ -94,9 +96,9 @@ class _PastReportsScreenState extends State<PastReportsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              "Your Previous Feasibility Reports",
-              style: TextStyle(
+            Text(
+              l10n.previousReportsHeader,
+              style: const TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF0A66C2)),
@@ -121,7 +123,7 @@ class _PastReportsScreenState extends State<PastReportsScreen> {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      "No saved reports yet",
+                      l10n.noSavedReports,
                       style: TextStyle(
                         fontSize: 18,
                         color: Colors.grey[600],
@@ -130,7 +132,7 @@ class _PastReportsScreenState extends State<PastReportsScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      "Generate a feasibility report to see it here",
+                      l10n.generateToSeeHere,
                       style: TextStyle(
                         fontSize: 14,
                         color: Colors.grey[500],
@@ -154,7 +156,7 @@ class _PastReportsScreenState extends State<PastReportsScreen> {
                       child: ListTile(
                         contentPadding: const EdgeInsets.all(16),
                         title: Text(
-                          "Date: ${report.formattedDate}",
+                          "${l10n.dateLabel} ${report.formattedDate}",
                           style: const TextStyle(
                               fontWeight: FontWeight.bold, fontSize: 16),
                         ),
@@ -162,11 +164,11 @@ class _PastReportsScreenState extends State<PastReportsScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const SizedBox(height: 6),
-                            Text("Suggested Structure: ${report.shortStructure}"),
+                            Text("${l10n.suggestedStructureLabel} ${report.shortStructure}"),
                             const SizedBox(height: 4),
-                            Text("State: ${report.state}"),
+                            Text("${l10n.stateLabel} ${report.state}"),
                             const SizedBox(height: 4),
-                            Text("Roof Area: ${report.roofArea.toStringAsFixed(1)} m²"),
+                            Text("${l10n.roofAreaLabel} ${report.roofArea.toStringAsFixed(1)} m²"),
                           ],
                         ),
                         trailing: Row(
@@ -181,22 +183,21 @@ class _PastReportsScreenState extends State<PastReportsScreen> {
                                 showDialog(
                                   context: context,
                                   builder: (context) => AlertDialog(
-                                    title: const Text('Delete Report'),
-                                    content: const Text(
-                                        'Are you sure you want to delete this report?'),
+                                    title: Text(l10n.deleteReportTitle),
+                                    content: Text(l10n.deleteReportConfirm),
                                     actions: [
                                       TextButton(
                                         onPressed: () => Navigator.pop(context),
-                                        child: const Text('Cancel'),
+                                        child: Text(l10n.cancel),
                                       ),
                                       TextButton(
                                         onPressed: () {
                                           Navigator.pop(context);
                                           _deleteReport(report);
                                         },
-                                        child: const Text(
-                                          'Delete',
-                                          style: TextStyle(color: Colors.red),
+                                        child: Text(
+                                          l10n.delete,
+                                          style: const TextStyle(color: Colors.red),
                                         ),
                                       ),
                                     ],

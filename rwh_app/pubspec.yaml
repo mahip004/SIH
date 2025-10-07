@@ -24,8 +24,7 @@ dependencies:
 
   # For fetching local weather/rainfall data via API
   http: ^1.2.2
-
-  intl: ^0.18.0
+  intl: ^0.20.2
   pdf: ^3.11.3
   printing: ^5.11.0
   path_provider: ^2.0.16
@@ -43,6 +42,9 @@ dependencies:
   font_awesome_flutter: ^10.7.0
   google_fonts: ^6.3.2
 
+  flutter_localizations:
+    sdk: flutter
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -50,6 +52,7 @@ dev_dependencies:
   flutter_lints: ^5.0.0
 
 flutter:
+  generate: true
   uses-material-design: true
 
   # Add your image assets here

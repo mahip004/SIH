@@ -7,6 +7,8 @@ import '../providers/user_provider.dart';
 import '../helpers/location_helper.dart';
 import '../services/firestore_service.dart'; // 🔹 import Firestore service
 import 'home_screen.dart';
+import '../l10n/app_localizations.dart';
+import '../widgets/language_selector.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -110,6 +112,8 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       double? latitude;
       double? longitude;
 
+      final l10n = AppLocalizations.of(context);
+
       if (savedLocation == null) {
         bool? shareLocation = await showDialog(
           context: context,
@@ -117,16 +121,16 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
             ),
-            title: const Text("📍 Share Location",
-                style: TextStyle(fontWeight: FontWeight.bold)),
-            content: const Text(
-              "Do you wish to share your location? This will help auto-update rainfall and feasibility data.",
-              style: TextStyle(fontSize: 15),
+            title: Text(l10n.shareLocationTitle,
+                style: const TextStyle(fontWeight: FontWeight.bold)),
+            content: Text(
+              l10n.shareLocationDesc,
+              style: const TextStyle(fontSize: 15),
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
-                child: const Text("No"),
+                child: Text(l10n.no),
               ),
               ElevatedButton(
                 onPressed: () => Navigator.pop(context, true),
@@ -136,7 +140,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text("Yes", style: TextStyle(color: Colors.white)),
+                child: Text(l10n.yes, style: const TextStyle(color: Colors.white)),
               ),
             ],
           ),
@@ -191,6 +195,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
   Widget build(BuildContext context) {
     final Color animatedColor =
         _backgroundGradientAnimation.value ?? const Color(0xFF1A73E8);
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       body: Container(
@@ -211,7 +216,9 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
           child: SingleChildScrollView(
             child: Column(
               children: [
-                const SizedBox(height: 40), // <-- Replace Spacer with SizedBox
+                const SizedBox(height: 16),
+                const LanguageSelector(),
+                const SizedBox(height: 24),
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
@@ -233,7 +240,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                 ),
                 const SizedBox(height: 24),
                 Text(
-                  "Rainwater Hub",
+                  l10n.appTitle,
                   style: TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
@@ -252,7 +259,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                 Container(
                   margin: const EdgeInsets.symmetric(horizontal: 40),
                   child: Text(
-                    "Your complete solution for rainwater harvesting and groundwater conservation",
+                    l10n.sustainableWaterDesc,
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 16,
@@ -314,7 +321,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Text(
-                                    "Sustainable Water Solutions",
+                                    l10n.sustainableWaterSolutions,
                                     style: TextStyle(
                                       fontSize: 18,
                                       fontWeight: FontWeight.bold,
@@ -326,7 +333,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                             ),
                             const SizedBox(height: 16),
                             Text(
-                              "Estimate rooftop rainwater harvesting potential and support groundwater conservation with our advanced tools and insights.",
+                              l10n.sustainableWaterDesc,
                               style: TextStyle(
                                 fontSize: 15,
                                 color: Colors.grey[700],
@@ -376,9 +383,9 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                                       width: 24,
                                     ),
                                     const SizedBox(width: 12),
-                                    const Text(
-                                      'Sign in with Google',
-                                      style: TextStyle(
+                                    Text(
+                                      l10n.signInWithGoogle,
+                                      style: const TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.bold,
                                       ),
@@ -389,7 +396,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                       ),
                       const SizedBox(height: 20),
                       Text(
-                        "By signing in, you agree to our Terms of Service and Privacy Policy",
+                        l10n.tosPrivacy,
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 12,

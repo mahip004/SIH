@@ -5,6 +5,8 @@ import '../providers/user_provider.dart';
 import '../services/auth_service.dart';
 import '../services/firestore_service.dart';
 import 'login_screen.dart';
+import '../l10n/app_localizations.dart';
+import '../widgets/language_selector.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -74,14 +76,14 @@ class _ProfileScreenState extends State<ProfileScreen>
     try {
       await FirestoreService().updateDistrict(user.uid, _districtController.text.trim());
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('District updated!')),
+        SnackBar(content: Text(AppLocalizations.of(context).districtUpdated)),
       );
       setState(() {
         _initialDistrict = _districtController.text.trim();
       });
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error updating district: $e')),
+        SnackBar(content: Text(AppLocalizations.of(context).districtUpdateError('$e'))),
       );
     } finally {
       setState(() => _isSaving = false);
@@ -95,11 +97,12 @@ class _ProfileScreenState extends State<ProfileScreen>
 
     // ✅ Safely access animation color
     final headerColor = _headerColorAnimation?.value ?? const Color(0xFF1A73E8);
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       appBar: AppBar(
         backgroundColor: headerColor,
-        title: const Text('Profile'),
+        title: Text(l10n.profileTitle),
         elevation: 4,
         shadowColor: Colors.black45,
       ),
@@ -110,11 +113,14 @@ class _ProfileScreenState extends State<ProfileScreen>
             mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
+              const SizedBox(height: 8),
+              const LanguageSelector(),
+              const SizedBox(height: 12),
               const SizedBox(height: 20),
               _ProfileAvatar(photoUrl: user?.photoURL, displayName: user?.displayName),
               const SizedBox(height: 16),
               Text(
-                user?.displayName ?? 'Guest',
+                user?.displayName ?? l10n.guest,
                 style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 6),
@@ -123,15 +129,15 @@ class _ProfileScreenState extends State<ProfileScreen>
                 style: TextStyle(fontSize: 14, color: Colors.grey[700]),
               ),
               const SizedBox(height: 24),
-              _InfoTile(label: 'Username', value: user?.displayName ?? '-'),
+              _InfoTile(label: l10n.username, value: user?.displayName ?? '-'),
               const SizedBox(height: 12),
 
               // --- District Input ---
               TextField(
                 controller: _districtController,
                 decoration: InputDecoration(
-                  labelText: 'District',
-                  hintText: 'Enter your district',
+                  labelText: l10n.district,
+                  hintText: l10n.enterDistrict,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -166,7 +172,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                 width: double.infinity,
                 child: ElevatedButton.icon(
                   icon: const Icon(Icons.logout),
-                  label: const Text('Logout'),
+                  label: Text(l10n.logout),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blueAccent,
                     foregroundColor: Colors.white,

@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import '../helpers/soil_helper.dart';
 import '../providers/user_provider.dart';
 import 'result_screen.dart';
+import '../l10n/app_localizations.dart';
+import '../utils/state_localization.dart';
 
 class FeasibilityForm extends StatefulWidget {
   const FeasibilityForm({super.key});
@@ -17,7 +19,7 @@ class _FeasibilityFormState extends State<FeasibilityForm> with SingleTickerProv
   final TextEditingController _roofAreaController = TextEditingController();
   final TextEditingController _spaceController = TextEditingController();
 
-  String _selectedRoofType = "Flat";
+  String _selectedRoofType = "flat"; // stable key
   String _selectedRoofMaterial = "GI Sheet";
   String? _selectedState;
 
@@ -67,6 +69,8 @@ class _FeasibilityFormState extends State<FeasibilityForm> with SingleTickerProv
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     if (_isLoading) {
       return Scaffold(
         body: Container(
@@ -88,6 +92,13 @@ class _FeasibilityFormState extends State<FeasibilityForm> with SingleTickerProv
         ),
       );
     }
+
+    final stateItems = SoilHelper.getAllStates().map((state) {
+      return DropdownMenuItem(
+        value: state,
+        child: Text(localizedStateName(context, state)),
+      );
+    }).toList();
 
     return Scaffold(
       body: Container(
@@ -153,7 +164,7 @@ class _FeasibilityFormState extends State<FeasibilityForm> with SingleTickerProv
                     AnimatedBuilder(
                       animation: _colorAnimation,
                       builder: (context, child) => Text(
-                        "Feasibility Form",
+                        l10n.feasibilityAppBar,
                         style: TextStyle(
                           color: _colorAnimation.value,
                           fontSize: 24,
@@ -174,8 +185,8 @@ class _FeasibilityFormState extends State<FeasibilityForm> with SingleTickerProv
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        gradient: LinearGradient(
-                          colors: [const Color(0xFF42A5F5), const Color(0xFF1A73E8)],
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF42A5F5), Color(0xFF1A73E8)],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
@@ -214,7 +225,7 @@ class _FeasibilityFormState extends State<FeasibilityForm> with SingleTickerProv
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    "Check Your Feasibility",
+                                    l10n.feasibilityHeader,
                                     style: TextStyle(
                                       fontSize: 28,
                                       fontWeight: FontWeight.w900,
@@ -224,7 +235,7 @@ class _FeasibilityFormState extends State<FeasibilityForm> with SingleTickerProv
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
-                                    "Fill in the details to evaluate your rainwater harvesting potential",
+                                    l10n.feasibilitySub,
                                     style: TextStyle(
                                       fontSize: 15,
                                       color: Colors.grey.shade700,
@@ -261,16 +272,14 @@ class _FeasibilityFormState extends State<FeasibilityForm> with SingleTickerProv
 
                         // --- State Dropdown ---
                         _buildDropdownField(
-                          label: "Select State",
-                          hint: "Choose your state",
+                          label: l10n.selectState,
+                          hint: l10n.chooseState,
                           value: _selectedState,
-                          items: SoilHelper.getAllStates().map((state) {
-                            return DropdownMenuItem(value: state, child: Text(state));
-                          }).toList(),
+                          items: stateItems,
                           onChanged: (value) {
                             setState(() => _selectedState = value);
                           },
-                          validator: (value) => value == null ? "Select a state" : null,
+                          validator: (value) => value == null ? l10n.errorSelectState : null,
                           icon: Icons.location_on_outlined,
                         ),
                         const SizedBox(height: 20),
@@ -278,10 +287,10 @@ class _FeasibilityFormState extends State<FeasibilityForm> with SingleTickerProv
                         // Number of Dwellers
                         _buildTextField(
                           controller: _dwellersController,
-                          label: "Number of Dwellers",
-                          hint: "Enter the number of people",
+                          label: l10n.numDwellers,
+                          hint: l10n.numDwellersHint,
                           keyboardType: TextInputType.number,
-                          validator: (value) => value!.isEmpty ? "Enter number of dwellers" : null,
+                          validator: (value) => value!.isEmpty ? l10n.errorNumDwellers : null,
                           icon: Icons.people_outline,
                         ),
                         const SizedBox(height: 20),
@@ -289,37 +298,45 @@ class _FeasibilityFormState extends State<FeasibilityForm> with SingleTickerProv
                         // Roof Area
                         _buildTextField(
                           controller: _roofAreaController,
-                          label: "Roof Area (m²)",
-                          hint: "Enter your roof area",
+                          label: l10n.roofArea,
+                          hint: l10n.roofAreaHint,
                           keyboardType: TextInputType.number,
-                          validator: (value) => value!.isEmpty ? "Enter roof area" : null,
+                          validator: (value) => value!.isEmpty ? l10n.errorRoofArea : null,
                           icon: Icons.home_outlined,
                         ),
                         const SizedBox(height: 20),
 
-                        // Roof Type Dropdown
-                        _buildDropdownField(
-                          label: "Roof Type",
-                          hint: "Select roof type",
+                        // Roof Type Dropdown (values are stable keys)
+                        _buildDropdownField<String>(
+                          label: l10n.roofType,
+                          hint: l10n.roofTypeHint,
                           value: _selectedRoofType,
-                          items: ["Flat", "Sloping"].map((type) {
-                            return DropdownMenuItem(value: type, child: Text(type));
-                          }).toList(),
+                          items: [
+                            DropdownMenuItem(value: 'flat', child: Text(l10n.roofTypeFlat)),
+                            DropdownMenuItem(value: 'sloping', child: Text(l10n.roofTypeSloping)),
+                          ],
                           onChanged: (value) => setState(() => _selectedRoofType = value!),
                           icon: Icons.roofing_outlined,
                         ),
                         const SizedBox(height: 20),
 
-                        // Roof Material Dropdown
-                        _buildDropdownField(
-                          label: "Roof Material",
-                          hint: "Select roof material",
+                        // Roof Material Dropdown with localized labels but stable values
+                        _buildDropdownField<String>(
+                          label: l10n.roofMaterial,
+                          hint: l10n.roofMaterialHint,
                           value: _selectedRoofMaterial,
                           items: _roofMaterials.keys.map((mat) {
                             final coeff = _roofMaterials[mat]!;
+                            final label = switch (mat) {
+                              'GI Sheet' => l10n.roofMaterialGiSheet,
+                              'Asbestos' => l10n.roofMaterialAsbestos,
+                              'Tiled' => l10n.roofMaterialTiled,
+                              'Concrete' => l10n.roofMaterialConcrete,
+                              _ => mat,
+                            };
                             return DropdownMenuItem(
                               value: mat,
-                              child: Text("$mat (${coeff.toStringAsFixed(2)})"),
+                              child: Text("$label (${coeff.toStringAsFixed(2)})"),
                             );
                           }).toList(),
                           onChanged: (value) => setState(() => _selectedRoofMaterial = value!),
@@ -330,10 +347,10 @@ class _FeasibilityFormState extends State<FeasibilityForm> with SingleTickerProv
                         // Open Space
                         _buildTextField(
                           controller: _spaceController,
-                          label: "Available Open Space (m²)",
-                          hint: "Enter available open space",
+                          label: l10n.openSpace,
+                          hint: l10n.openSpaceHint,
                           keyboardType: TextInputType.number,
-                          validator: (value) => value!.isEmpty ? "Enter open space area" : null,
+                          validator: (value) => value!.isEmpty ? l10n.errorOpenSpace : null,
                           icon: Icons.landscape_outlined,
                         ),
                         const SizedBox(height: 36),
@@ -364,7 +381,7 @@ class _FeasibilityFormState extends State<FeasibilityForm> with SingleTickerProv
                                 Provider.of<UserProvider>(context, listen: false).setUserData(
                                   numberOfDwellers: int.parse(_dwellersController.text),
                                   roofArea: double.parse(_roofAreaController.text),
-                                  roofType: _selectedRoofType.toLowerCase(),
+                                  roofType: _selectedRoofType,
                                   roofMaterial: _selectedRoofMaterial,
                                   runoffCoefficient: _roofMaterials[_selectedRoofMaterial]!,
                                   openSpace: double.parse(_spaceController.text),
@@ -386,14 +403,14 @@ class _FeasibilityFormState extends State<FeasibilityForm> with SingleTickerProv
                               ),
                               elevation: 0,
                             ),
-                            child: const Row(
+                            child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.check_circle_outline, size: 24),
-                                SizedBox(width: 10),
+                                const Icon(Icons.check_circle_outline, size: 24),
+                                const SizedBox(width: 10),
                                 Text(
-                                  "Check Feasibility",
-                                  style: TextStyle(
+                                  l10n.checkFeasibilityCta,
+                                  style: const TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
                                     letterSpacing: 0.6,
@@ -428,8 +445,8 @@ class _FeasibilityFormState extends State<FeasibilityForm> with SingleTickerProv
                               Container(
                                 padding: const EdgeInsets.all(14),
                                 decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    colors: [const Color(0xFF1A73E8), const Color(0xFF42A5F5)],
+                                  gradient: const LinearGradient(
+                                    colors: [Color(0xFF1A73E8), Color(0xFF42A5F5)],
                                     begin: Alignment.topLeft,
                                     end: Alignment.bottomRight,
                                   ),
@@ -454,7 +471,7 @@ class _FeasibilityFormState extends State<FeasibilityForm> with SingleTickerProv
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      "Did you know?",
+                                      l10n.didYouKnow,
                                       style: TextStyle(
                                         fontSize: 18,
                                         fontWeight: FontWeight.w900,
@@ -463,7 +480,7 @@ class _FeasibilityFormState extends State<FeasibilityForm> with SingleTickerProv
                                     ),
                                     const SizedBox(height: 6),
                                     Text(
-                                      "The roof material significantly affects how much rainwater you can collect. GI sheets have the highest collection efficiency.",
+                                      l10n.didYouKnowBody,
                                       style: TextStyle(
                                         fontSize: 15,
                                         color: Colors.grey.shade800,
@@ -507,10 +524,10 @@ class _FeasibilityFormState extends State<FeasibilityForm> with SingleTickerProv
             blurRadius: 14,
             offset: const Offset(0, 8),
           ),
-          BoxShadow(
+          const BoxShadow(
             color: Colors.white,
             blurRadius: 10,
-            offset: const Offset(-6, -6),
+            offset: Offset(-6, -6),
           ),
         ],
       ),
@@ -533,9 +550,9 @@ class _FeasibilityFormState extends State<FeasibilityForm> with SingleTickerProv
             borderRadius: BorderRadius.circular(20),
             borderSide: BorderSide(color: Colors.blue.shade50, width: 1.5),
           ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(20),
-            borderSide: const BorderSide(color: Color(0xFF1A73E8), width: 2),
+          focusedBorder: const OutlineInputBorder(
+            borderRadius: BorderRadius.all(Radius.circular(20)),
+            borderSide: BorderSide(color: Color(0xFF1A73E8), width: 2),
           ),
           errorBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(20),
@@ -573,10 +590,10 @@ class _FeasibilityFormState extends State<FeasibilityForm> with SingleTickerProv
             blurRadius: 14,
             offset: const Offset(0, 8),
           ),
-          BoxShadow(
+          const BoxShadow(
             color: Colors.white,
             blurRadius: 10,
-            offset: const Offset(-6, -6),
+            offset: Offset(-6, -6),
           ),
         ],
       ),
@@ -599,9 +616,9 @@ class _FeasibilityFormState extends State<FeasibilityForm> with SingleTickerProv
             borderRadius: BorderRadius.circular(20),
             borderSide: BorderSide(color: Colors.blue.shade50, width: 1.5),
           ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(20),
-            borderSide: const BorderSide(color: Color(0xFF1A73E8), width: 2),
+          focusedBorder: const OutlineInputBorder(
+            borderRadius: BorderRadius.all(Radius.circular(20)),
+            borderSide: BorderSide(color: Color(0xFF1A73E8), width: 2),
           ),
           errorBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(20),

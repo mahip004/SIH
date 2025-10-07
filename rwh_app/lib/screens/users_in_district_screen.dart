@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../providers/user_provider.dart';
 import 'profile_screen.dart';
+import '../l10n/app_localizations.dart';
 
 class UsersInDistrictScreen extends StatelessWidget {
   const UsersInDistrictScreen({super.key});
@@ -19,10 +20,11 @@ class UsersInDistrictScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final user = context.watch<UserProvider>().user ?? FirebaseAuth.instance.currentUser;
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Users in Your District'),
+        title: Text(l10n.usersInDistrictTitle),
       ),
       body: FutureBuilder<DocumentSnapshot<Map<String, dynamic>>>(
         future: user != null
@@ -51,7 +53,7 @@ class UsersInDistrictScreen extends StatelessWidget {
                   children: [
                     const SizedBox(height: 24),
                     Text(
-                      "🌎 $district District",
+                      l10n.districtHeader(district),
                       style: const TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
@@ -60,7 +62,7 @@ class UsersInDistrictScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      "There are ${users.length} users from your district using Rainwater Hub!",
+                      l10n.usersCount(users.length.toString(), 'Rainwater Hub'),
                       style: const TextStyle(
                         fontSize: 16,
                         color: Color(0xFF43CEA2),
@@ -71,7 +73,7 @@ class UsersInDistrictScreen extends StatelessWidget {
                     users.isEmpty
                         ? Center(
                             child: Text(
-                              "Be the first to start rainwater harvesting in your district!",
+                              l10n.usersEmpty,
                               style: TextStyle(
                                 fontSize: 16,
                                 color: Colors.grey[700],
@@ -112,10 +114,9 @@ class UsersInDistrictScreen extends StatelessWidget {
                         color: const Color(0xFF43CEA2).withOpacity(0.08),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Text(
-                        "Join others in your district and make a difference! "
-                        "Encourage your friends and neighbors to start harvesting rainwater.",
-                        style: TextStyle(
+                      child: Text(
+                        l10n.usersJoinOthers,
+                        style: const TextStyle(
                           fontSize: 15,
                           color: Color(0xFF185A9D),
                           fontWeight: FontWeight.w500,
@@ -137,6 +138,7 @@ class UsersInDistrictScreen extends StatelessWidget {
 class _NoDistrictWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32.0),
@@ -145,20 +147,20 @@ class _NoDistrictWidget extends StatelessWidget {
           children: [
             const Icon(Icons.location_off, size: 48, color: Color(0xFF185A9D)),
             const SizedBox(height: 24),
-            const Text(
-              "District not set!",
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF185A9D)),
+            Text(
+              l10n.noDistrictTitle,
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF185A9D)),
             ),
             const SizedBox(height: 12),
             Text(
-              "Please set your district in your profile to see other users from your area.",
+              l10n.noDistrictDesc,
               style: TextStyle(fontSize: 16, color: Colors.grey[700]),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
             ElevatedButton.icon(
               icon: const Icon(Icons.person_pin_circle),
-              label: const Text("Go to Profile"),
+              label: Text(l10n.goToProfile),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF185A9D),
                 foregroundColor: Colors.white,
